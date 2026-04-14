@@ -1,4 +1,4 @@
-# Affinidi Untraceable ZK VC (Dart)
+# Affinidi VCs for ZKPs - Dart
 
 Read **[docs/protocol.md](docs/protocol.md)** first for the protocol, credential
 layout, and how Untraceable-ZK-VC-style circuits fit the untraceable ZK-VC model.
@@ -37,7 +37,7 @@ proof.
 Import:
 
 ```dart
-import 'package:affinidi_untraceable_zk_vc/affinidi_untraceable_zk_vc.dart';
+import 'package:zkp_vc/zkp_vc.dart';
 ```
 
 Main exported types:

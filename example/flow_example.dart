@@ -16,8 +16,8 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:affinidi_untraceable_zk_vc/affinidi_untraceable_zk_vc.dart';
-import 'package:affinidi_untraceable_zk_vc/src/rust_eddsa_helper_ffi.dart';
+import 'package:zkp_vc/zkp_vc.dart';
+import 'package:zkp_vc/src/rust_eddsa_helper_ffi.dart';
 
 /// BN254 field prime (same as `lib/src/commitments.dart`).
 final _bn254Prime = BigInt.parse(
