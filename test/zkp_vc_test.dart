@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:zkp_vc/zkp_vc.dart';
-import 'package:zkp_vc/src/rust_eddsa_helper_ffi.dart';
 import 'package:test/test.dart';
+import 'package:zkp_vc/src/rust_eddsa_helper_ffi.dart';
+import 'package:zkp_vc/zkp_vc.dart';
 
 class _FakeRustEddsaHelper implements RustEddsaHelperFfi {
   final List<List<String>> fieldHashCalls = <List<String>>[];

@@ -1,10 +1,12 @@
 @Tags(<String>['integration'])
+library rust_bridge_integration_test;
+
 import 'dart:math';
 
-import 'package:zkp_vc/zkp_vc.dart';
+import 'package:test/test.dart';
 import 'package:zkp_vc/src/commitments.dart';
 import 'package:zkp_vc/src/rust_eddsa_helper_ffi.dart';
-import 'package:test/test.dart';
+import 'package:zkp_vc/zkp_vc.dart';
 
 String _randomPrivateKeyHex() {
   final random = Random.secure();

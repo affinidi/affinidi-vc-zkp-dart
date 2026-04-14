@@ -1,7 +1,7 @@
 /// BabyJubJub coordinates when `header['issuer']` is `Ax,Ay` (decimal or `0x` hex).
 ///
 /// Other `issuer` values (for example a DID) do not match this shape; resolve
-/// keys outside this library and pass them to [VcVerifier.verifyDocument].
+/// keys outside this library and pass them to `verifyDocument`.
 class IssuerBabyJubCoords {
   /// Creates parsed issuer coordinates.
   const IssuerBabyJubCoords({

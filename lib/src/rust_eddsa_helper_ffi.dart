@@ -258,7 +258,7 @@ class RustEddsaHelperFfi {
     final candidates = <String>[
       '${Directory.current.path}/lib/rust_eddsa_helper/target/release/$libraryName',
       '${Directory.current.path}/rust_eddsa_helper/target/release/$libraryName',
-      '$libraryName',
+      libraryName,
     ];
 
     for (final candidate in candidates) {

@@ -16,8 +16,8 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:zkp_vc/zkp_vc.dart';
 import 'package:zkp_vc/src/rust_eddsa_helper_ffi.dart';
+import 'package:zkp_vc/zkp_vc.dart';
 
 /// BN254 field prime (same as `lib/src/commitments.dart`).
 final _bn254Prime = BigInt.parse(
@@ -137,5 +137,5 @@ Future<void> main() async {
   };
 
   // ignore: avoid_print
-  print(JsonEncoder.withIndent('  ').convert(bundle));
+  print(const JsonEncoder.withIndent('  ').convert(bundle));
 }
