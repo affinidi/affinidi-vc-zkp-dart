@@ -1,0 +1,43 @@
+name: affinidi_untraceable_zk_vc
+description: Affinidi Untraceable Zero-knowledge Verifiable Credentials
+version: 1.0.0
+
+environment:
+  sdk: '>=2.17.0 <4.0.0'
+
+dependencies:
+  ffi: 2.0.1
+dev_dependencies:
+  test: ^1.31.0
+
+topics:
+  # default topic - please add topics based on the repo
+  - dart
+
+command:
+  version:
+    changelogCommitBodies:
+      include: true
+      onlyBreaking: false
+
+melos:
+  packages:
+    - .
+  scripts:
+    test:
+      name: test
+      description: "test with coverage"
+      exec: dart run coverage:test_with_coverage
+      dirExists: test
+      concurrency: 4
+      failFast: true
+      noSelect: true
+    analyze:
+      exec: dart analyze .
+      concurrency: 4
+      failFast: true
+      noSelect: true
+      packageFilters:
+        flutter: false
+        includePrivatePackages: false
+        diff: 'origin/main'
