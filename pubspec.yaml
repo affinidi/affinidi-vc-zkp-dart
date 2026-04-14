@@ -1,5 +1,5 @@
 name: zkp_vc
-description: Affinidi Untraceable Zero-knowledge Verifiable Credentials
+description: VCs for ZKPs - Dart
 version: 1.0.0
 
 environment:
@@ -9,6 +9,7 @@ dependencies:
   ffi: 2.0.1
 dev_dependencies:
   test: ^1.31.0
+  dart_flutter_team_lints: ^3.5.2
 
 topics:
   # default topic - please add topics based on the repo
