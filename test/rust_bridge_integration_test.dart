@@ -4,9 +4,9 @@ library rust_bridge_integration_test;
 import 'dart:math';
 
 import 'package:test/test.dart';
-import 'package:zkp_vc/src/commitments.dart';
-import 'package:zkp_vc/src/rust_eddsa_helper_ffi.dart';
-import 'package:zkp_vc/zkp_vc.dart';
+import 'package:vc_zkp/src/commitments.dart';
+import 'package:vc_zkp/src/rust_eddsa_helper_ffi.dart';
+import 'package:vc_zkp/vc_zkp.dart';
 
 String _randomPrivateKeyHex() {
   final random = Random.secure();

@@ -37,7 +37,7 @@ proof.
 Import:
 
 ```dart
-import 'package:zkp_vc/zkp_vc.dart';
+import 'package:vc_zkp/vc_zkp.dart';
 ```
 
 Main exported types:
