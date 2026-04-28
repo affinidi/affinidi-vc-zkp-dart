@@ -1,6 +1,3 @@
-@Tags(<String>['integration'])
-library rust_bridge_integration_test;
-
 import 'dart:math';
 
 import 'package:test/test.dart';
@@ -27,7 +24,7 @@ Map<String, Object?> _header(String issuerCommaSeparated) {
 }
 
 void main() {
-  group('Rust bridge integration', () {
+  group('Rust bridge integration', tags: 'integration', () {
     late RustEddsaHelperFfi crypto;
     late VcIssuer issuer;
     late VcHolder holder;

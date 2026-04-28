@@ -1,4 +1,3 @@
-/// Public entrypoint for VCs for ZKPs - Dart library.
-library vc_zkp;
+// Public entrypoint for VCs for ZKPs - Dart library.
 
 export 'src/untraceable_zk_vc.dart';

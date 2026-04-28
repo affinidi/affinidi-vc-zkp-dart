@@ -1,5 +1,4 @@
-/// Main exports for untraceable ZK VC implementation.
-library untraceable_zk_vc;
+// Main exports for untraceable ZK VC implementation.
 
 export 'holder.dart' show HolderCircuitInputs, VcHolder;
 export 'issuer.dart' show VcIssuer;

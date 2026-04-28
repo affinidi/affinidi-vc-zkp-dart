@@ -76,8 +76,8 @@ Map<String, Object?> _buildHeader({
   String issuer = '123,456',
 }) {
   return <String, Object?>{
-    'holderAx': 'holder-ax',
-    'holderAy': 'holder-ay',
+    'holderAx': '789',
+    'holderAy': '987',
     'version': '1',
     'issued_at': 1712345678,
     'schema': schema,
@@ -325,13 +325,13 @@ void main() {
       expect(inputs.finalArray, isNot(equals(const <String>['h1', 'h2', 'p1'])));
       expect(inputs.issuerAx, '123');
       expect(inputs.issuerAy, '456');
-      expect(inputs.holderAx, 'holder-ax');
-      expect(inputs.holderAy, 'holder-ay');
+      expect(inputs.holderAx, '789');
+      expect(inputs.holderAy, '987');
       final witness = inputs.toJson();
       expect(witness['issuerAx'], '123');
       expect(witness['issuerAy'], '456');
-      expect(witness['holderAx'], 'holder-ax');
-      expect(witness['holderAy'], 'holder-ay');
+      expect(witness['holderAx'], '789');
+      expect(witness['holderAy'], '987');
       expect(crypto.fieldHashCalls, isNotEmpty);
     });
 
@@ -342,8 +342,8 @@ void main() {
         'header': <String, dynamic>{
           'version': '1',
           'issuer': 'issuer-ax,issuer-ay',
-          'holderAx': 'holder-ax',
-          'holderAy': 'holder-ay',
+          'holderAx': '789',
+          'holderAy': '987',
         },
         'disclosures': <Map<String, Object?>>[
           <String, Object?>{'field': 'age', 'value': 18},
