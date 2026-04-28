@@ -1,32 +1,48 @@
 import 'dart:convert';
 import 'dart:ffi' as ffi;
-import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
 typedef _PoseidonHashNative = ffi.Int32 Function(
     ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-typedef _PoseidonHashDart = int Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
 typedef _PoseidonHashBitsNative = ffi.Int32 Function(
     ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-typedef _PoseidonHashBitsDart = int Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-
 typedef _PoseidonFreeStringNative = ffi.Void Function(ffi.Pointer<Utf8>);
-typedef _PoseidonFreeStringDart = void Function(ffi.Pointer<Utf8>);
-
 typedef _EddsaSignNative = ffi.Int32 Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-typedef _EddsaSignDart = int Function(
     ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
 typedef _EddsaVerifyNative = ffi.Int32 Function(
     ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-typedef _EddsaVerifyDart = int Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-
 typedef _EddsaFreeStringNative = ffi.Void Function(ffi.Pointer<Utf8>);
-typedef _EddsaFreeStringDart = void Function(ffi.Pointer<Utf8>);
+
+@ffi.Native<_PoseidonHashNative>(symbol: 'poseidon_hash')
+external int _rustPoseidonHash(
+  ffi.Pointer<Utf8> inputJson,
+  ffi.Pointer<ffi.Pointer<Utf8>> outputJson,
+);
+
+@ffi.Native<_PoseidonHashBitsNative>(symbol: 'poseidon_hash_bits_ffi')
+external int _rustPoseidonHashBitsFfi(
+  ffi.Pointer<Utf8> inputJson,
+  ffi.Pointer<ffi.Pointer<Utf8>> outputJson,
+);
+
+@ffi.Native<_PoseidonFreeStringNative>(symbol: 'poseidon_free_string')
+external void _rustPoseidonFreeString(ffi.Pointer<Utf8> ptr);
+
+@ffi.Native<_EddsaSignNative>(symbol: 'eddsa_sign')
+external int _rustEddsaSign(
+  ffi.Pointer<Utf8> inputJson,
+  ffi.Pointer<ffi.Pointer<Utf8>> outputJson,
+);
+
+@ffi.Native<_EddsaVerifyNative>(symbol: 'eddsa_verify')
+external int _rustEddsaVerify(
+  ffi.Pointer<Utf8> inputJson,
+  ffi.Pointer<ffi.Pointer<Utf8>> outputJson,
+);
+
+@ffi.Native<_EddsaFreeStringNative>(symbol: 'eddsa_free_string')
+external void _rustEddsaFreeString(ffi.Pointer<Utf8> ptr);
 
 /// Result of EdDSA signing from Rust helper.
 class EddsaSignatureResult {
@@ -56,44 +72,13 @@ class EddsaSignatureResult {
 }
 
 /// FFI wrapper around Rust helper (Poseidon + EdDSA).
+///
+/// Native code is built and bundled via `hook/build.dart` (Dart hooks). Supported
+/// targets: macOS, iOS, and Android.
 class RustEddsaHelperFfi {
-  /// Creates helper and loads dynamic library.
-  RustEddsaHelperFfi({ffi.DynamicLibrary? library})
-      : _lib = library ?? _openDynamicLibrary() {
-    _poseidonHash = _lib
-        .lookup<ffi.NativeFunction<_PoseidonHashNative>>('poseidon_hash')
-        .asFunction<_PoseidonHashDart>();
-    _poseidonHashBits = _lib
-        .lookup<ffi.NativeFunction<_PoseidonHashBitsNative>>(
-          'poseidon_hash_bits_ffi',
-        )
-        .asFunction<_PoseidonHashBitsDart>();
-    _poseidonFreeString = _lib
-        .lookup<ffi.NativeFunction<_PoseidonFreeStringNative>>(
-          'poseidon_free_string',
-        )
-        .asFunction<_PoseidonFreeStringDart>();
-
-    _eddsaSign = _lib
-        .lookup<ffi.NativeFunction<_EddsaSignNative>>('eddsa_sign')
-        .asFunction<_EddsaSignDart>();
-    _eddsaVerify = _lib
-        .lookup<ffi.NativeFunction<_EddsaVerifyNative>>('eddsa_verify')
-        .asFunction<_EddsaVerifyDart>();
-    _eddsaFreeString = _lib
-        .lookup<ffi.NativeFunction<_EddsaFreeStringNative>>(
-          'eddsa_free_string',
-        )
-        .asFunction<_EddsaFreeStringDart>();
-  }
-
-  final ffi.DynamicLibrary _lib;
-  late final _PoseidonHashDart _poseidonHash;
-  late final _PoseidonHashBitsDart _poseidonHashBits;
-  late final _PoseidonFreeStringDart _poseidonFreeString;
-  late final _EddsaSignDart _eddsaSign;
-  late final _EddsaVerifyDart _eddsaVerify;
-  late final _EddsaFreeStringDart _eddsaFreeString;
+  /// Creates helper; symbols resolve against the bundled `rust_eddsa_helper`
+  /// dynamic library from the build hook.
+  RustEddsaHelperFfi();
 
   /// Runs Poseidon hash over field elements represented as decimal strings.
   Future<String> poseidonHashFieldElements(List<String> inputs) async {
@@ -105,11 +90,11 @@ class RustEddsaHelperFfi {
     final responsePtr = malloc<ffi.Pointer<Utf8>>();
 
     try {
-      final code = _poseidonHash(requestPtr, responsePtr);
+      final code = _rustPoseidonHash(requestPtr, responsePtr);
       final response = _parseRustJson(
         code: code,
         responsePtr: responsePtr.value,
-        freeString: _poseidonFreeString,
+        freeString: _rustPoseidonFreeString,
         operationName: 'poseidon_hash',
       );
       final result = response['result']?.toString();
@@ -135,11 +120,11 @@ class RustEddsaHelperFfi {
     final responsePtr = malloc<ffi.Pointer<Utf8>>();
 
     try {
-      final code = _poseidonHashBits(requestPtr, responsePtr);
+      final code = _rustPoseidonHashBitsFfi(requestPtr, responsePtr);
       final response = _parseRustJson(
         code: code,
         responsePtr: responsePtr.value,
-        freeString: _poseidonFreeString,
+        freeString: _rustPoseidonFreeString,
         operationName: 'poseidon_hash_bits_ffi',
       );
       final result = response['result']?.toString();
@@ -166,11 +151,11 @@ class RustEddsaHelperFfi {
     final responsePtr = malloc<ffi.Pointer<Utf8>>();
 
     try {
-      final code = _eddsaSign(requestPtr, responsePtr);
+      final code = _rustEddsaSign(requestPtr, responsePtr);
       final response = _parseRustJson(
         code: code,
         responsePtr: responsePtr.value,
-        freeString: _eddsaFreeString,
+        freeString: _rustEddsaFreeString,
         operationName: 'eddsa_sign',
       );
       final result = response['result'];
@@ -214,11 +199,11 @@ class RustEddsaHelperFfi {
     final responsePtr = malloc<ffi.Pointer<Utf8>>();
 
     try {
-      final code = _eddsaVerify(requestPtr, responsePtr);
+      final code = _rustEddsaVerify(requestPtr, responsePtr);
       final response = _parseRustJson(
         code: code,
         responsePtr: responsePtr.value,
-        freeString: _eddsaFreeString,
+        freeString: _rustEddsaFreeString,
         operationName: 'eddsa_verify',
       );
       return response['result'] == true;
@@ -251,41 +236,5 @@ class RustEddsaHelperFfi {
       );
     }
     return decoded;
-  }
-
-  static ffi.DynamicLibrary _openDynamicLibrary() {
-    final libraryName = _dynamicLibraryName();
-    final candidates = <String>[
-      '${Directory.current.path}/lib/rust_eddsa_helper/target/release/$libraryName',
-      '${Directory.current.path}/rust_eddsa_helper/target/release/$libraryName',
-      libraryName,
-    ];
-
-    for (final candidate in candidates) {
-      try {
-        return ffi.DynamicLibrary.open(candidate);
-      } on Object {
-        continue;
-      }
-    }
-
-    throw StateError(
-      'Unable to load Rust helper library. Tried: ${candidates.join(', ')}',
-    );
-  }
-
-  static String _dynamicLibraryName() {
-    if (Platform.isMacOS) {
-      return 'librust_eddsa_helper.dylib';
-    }
-    if (Platform.isLinux || Platform.isAndroid) {
-      return 'librust_eddsa_helper.so';
-    }
-    if (Platform.isWindows) {
-      return 'rust_eddsa_helper.dll';
-    }
-    throw UnsupportedError(
-      'Unsupported platform: ${Platform.operatingSystem}.',
-    );
   }
 }

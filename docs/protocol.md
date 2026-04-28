@@ -61,12 +61,12 @@ The holder stores the issued credential in the following JSON format:
     { "field": "nationality", "value": "USA" }
   ],
   "header_commitments": [
-    "poseidon(fieldName_0, value_0)",
-    "poseidon(fieldName_1, value_1)"
+    "<poseidon(index_0,fieldName_0,type_0,value_0)>",
+    "<poseidon(index_1,fieldName_1,type_1,value_1)>"
   ],
   "payload_commitments": [
-    "poseidon(fieldName_0, value_0)",
-    "poseidon(fieldName_1, value_1)"
+    "<poseidon(index_0,fieldName_0,type_0,value_0)>",
+    "<poseidon(index_1,fieldName_1,type_1,value_1)>"
   ],
   "signature": {
     "R8": ["0x...", "0x..."],
@@ -86,10 +86,25 @@ This means `fieldName` is always exactly one circuit signal — no variable-leng
 Each claim is committed as:
 
 ```
-commitment[i] = Poseidon([fieldNameAsFelt(field), value])
+commitment[i] = Poseidon([
+  index,
+  encodeString(fieldName),
+  typeTag(value),
+  encodeTypedValue(value)
+])
 ```
 
-The field name is included in the preimage to prevent commitment aliasing — without it, `Poseidon([28])` for `age` and `Poseidon([28])` for `risk_score` would be identical commitments, enabling substitution attacks.
+This ensures type integrity (`28` != `"28"` != `"0x1C"`, `false` != `0` != `null`)
+and separates the name/value encoding spaces.
+
+The index + type fields are included to keep commitment semantics stable across
+different language runtimes and serializers: the same logical VC must always
+produce the same commitments, while semantically different claims must never
+collapse to the same commitment preimage.
+
+Header commitments use alphabetical header-key order. Payload commitments are
+also ordered deterministically by payload field name before indexes are
+assigned. Duplicate payload field names are rejected.
 
 No per-commitment salt is required because the full commitment array is always kept private — it never appears as a public circuit output.
 
@@ -149,11 +164,11 @@ Proves: *"I control the identity to whom this credential was issued, and it was 
 
 ```
 Public inputs:
-  challenge         — verifier-provided nonce
   issuer_pubkey     — Baby JubJub (Ax, Ay) of the issuer
-  nonce             — session blinding factor (public for cross-proof binding)
+  challengeDigest   — verifier challenge digest signed by holder
+  blinder_factor    — session blinding factor (public for cross-proof binding)
 [output]: 
-  blinded_root      — Poseidon([digest, nonce])
+  blinded_root      — Poseidon([digest, blinder_factor])
 
 Private inputs:
   header_commitments []  — array of header commitments
@@ -167,9 +182,11 @@ Circuit constraints:
 
 ```
 combined = [...header_commitments, ...payload_commitments]
-a) BabyJubJub.verify(challenge, challenge_sig, holder_pubkey)
-b) header_commitments[holder_idx] == Poseidon(["holderAx", holder_pubkey.Ax])
-   header_commitments[holder_idx+1] == Poseidon(["holderAy", holder_pubkey.Ay])
+a) BabyJubJub.verify(challengeDigest, challenge_sig, holder_pubkey)
+b) header_commitments[holder_idx] ==
+      Poseidon([holder_idx, "holderAx", 2, holder_pubkey.Ax])
+   header_commitments[holder_idx+1] ==
+      Poseidon([holder_idx+1, "holderAy", 2, holder_pubkey.Ay])
 c) digest = Poseidon(combined)
    BabyJubJub.verify(digest, doc_signature, issuer_pubkey)
 d) blinded_root == Poseidon([digest, nonce])
@@ -183,16 +200,17 @@ Proves: *"A specific claim inside the signed credential satisfies predicate P."*
 
 ```
 Public inputs:
-  fieldName         — Field name to be sure that its preoper predicate
-  nonce             — must match Circuit 1
-  threshold         — predicate parameter (e.g. 10000)
+  fieldName         — claim field name to evaluate
+  blinder_factor    — must match Circuit 1
+  min_threshold     — predicate parameter (e.g. 10000)
 [output]:
   blinded_root      — must match Circuit 1
 
 Private inputs:
   header_commitments []  — array of header commitments
   payload_commitments[]  — array of payload commitments
-  value             — raw claim value
+  payloadIndex       — selected payload slot index
+  fieldValue         — raw claim value
 ```
 
 Circuit constraints:
@@ -200,11 +218,13 @@ Circuit constraints:
 ```
 combined = [...header_commitments, ...payload_commitments]
 a) digest = Poseidon(combined)
-   blinded_root == Poseidon([digest, nonce])
+   blinded_root == Poseidon([digest, blinder_factor])
 
-b) verify that Poseidon([fieldName, value]) is present at the payload_commitments[]
+b) compute claimed = Poseidon([payloadIndex, fieldName, typeTag(fieldValue), fieldValue])
+   and enforce claimed == payload_commitments[payloadIndex] via one-hot index selector
 
-c) satisfies == GreaterThan(32)([value, threshold])
+c) enforce `fieldValue` and `min_threshold` in [0, 2^252) via Num2Bits(252),
+   then satisfies == GreaterThan(252)([fieldValue, min_threshold])
 ```
 
 The verifier learns only that *some* claim in the signed document satisfies the threshold, not the value.

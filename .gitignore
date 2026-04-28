@@ -78,3 +78,9 @@ pubspec.lock.failed_tracker
 
 reference/
 interop_test/
+
+# Native prebuild artifacts are published as GitHub release assets.
+prebuilds/**
+!prebuilds/
+!prebuilds/manifest.json
+!prebuilds/source_fingerprint.txt

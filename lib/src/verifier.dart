@@ -1,5 +1,4 @@
 import 'commitments.dart';
-import 'holder.dart';
 import 'issuer_public_key_parse.dart';
 import 'models.dart';
 import 'rust_eddsa_helper_ffi.dart';
@@ -39,41 +38,44 @@ class VcVerifier {
   VcVerifier({RustEddsaHelperFfi? crypto}) {
     final helper = crypto ?? RustEddsaHelperFfi();
     _crypto = helper;
-    _holder = VcHolder(crypto: helper);
   }
 
   late final RustEddsaHelperFfi _crypto;
-  late final VcHolder _holder;
 
   /// Verifies a signed VC document.
   ///
-  /// When [issuerPublicKeyAx] and [issuerPublicKeyAy] are set, they are used
-  /// for EdDSA (for example after resolving a DID outside this library).
-  /// Otherwise, if `header['issuer']` is comma-separated `Ax,Ay`, that pair is
-  /// used. If neither applies, verification fails with a clear error.
+  /// [issuerPublicKeyAx] and [issuerPublicKeyAy] must always be provided and
+  /// are used for EdDSA when provided (for example after resolving a DID
+  /// outside this library).
+  ///
+  /// By default, the verifier tries to derive issuer key from
+  /// `header['issuer']` when it is comma-separated `Ax,Ay`. If
+  /// [issuerPublicKeyAx]/[issuerPublicKeyAy] are provided, they must match the
+  /// derived key. Set [isIssuerPubKeyMatchAlreadyVerified] to `true` to skip
+  /// that issuer header-to-key match.
   Future<VerificationResult> verifyDocument(
     SignedVcDocument document, {
     String? issuerPublicKeyAx,
     String? issuerPublicKeyAy,
+    bool isIssuerPubKeyMatchAlreadyVerified = false,
   }) async {
     try {
-      final circuitInputs = await _holder.prepareForCircuit(document);
+      final computedHeaderCommitments = await buildHeaderCommitments(
+        document.header,
+        _crypto,
+      );
+      final computedPayloadCommitments = await buildPayloadCommitments(
+        document.disclosures,
+        _crypto,
+      );
 
-      if (document.headerCommitments.isNotEmpty &&
-          !_sameList(
-            circuitInputs.headerCommitments,
-            document.headerCommitments,
-          )) {
+      if (!_sameList(computedHeaderCommitments, document.headerCommitments)) {
         return const VerificationResult(
           valid: false,
           error: 'Header commitments mismatch.',
         );
       }
-      if (document.payloadCommitments.isNotEmpty &&
-          !_sameList(
-            circuitInputs.payloadCommitments,
-            document.payloadCommitments,
-          )) {
+      if (!_sameList(computedPayloadCommitments, document.payloadCommitments)) {
         return const VerificationResult(
           valid: false,
           error: 'Payload commitments mismatch.',
@@ -84,10 +86,12 @@ class VcVerifier {
         document.header,
         issuerPublicKeyAx: issuerPublicKeyAx,
         issuerPublicKeyAy: issuerPublicKeyAy,
+        isIssuerPubKeyMatchAlreadyVerified:
+            isIssuerPubKeyMatchAlreadyVerified,
       );
       final digest = await buildDocumentDigest(
-        headerCommitments: circuitInputs.headerCommitments,
-        payloadCommitments: circuitInputs.payloadCommitments,
+        headerCommitments: computedHeaderCommitments,
+        payloadCommitments: computedPayloadCommitments,
         helper: _crypto,
       );
       final signatureValid = await _crypto.verifyDigestSignature(
@@ -134,23 +138,52 @@ class VcVerifier {
     Map<String, Object?> header, {
     String? issuerPublicKeyAx,
     String? issuerPublicKeyAy,
+    required bool isIssuerPubKeyMatchAlreadyVerified,
   }) {
     final overrideAx = issuerPublicKeyAx?.trim() ?? '';
     final overrideAy = issuerPublicKeyAy?.trim() ?? '';
-    if (overrideAx.isNotEmpty && overrideAy.isNotEmpty) {
-      return _IssuerPublicKey(
-        ax: _normalizeFieldNumber(overrideAx),
-        ay: _normalizeFieldNumber(overrideAy),
+    final hasOverride = overrideAx.isNotEmpty || overrideAy.isNotEmpty;
+    if (hasOverride && (overrideAx.isEmpty || overrideAy.isEmpty)) {
+      throw const FormatException(
+        'Issuer signing key must include both '
+        'issuerPublicKeyAx and issuerPublicKeyAy.',
       );
     }
+
     final parsed = tryParseIssuerBabyJubCommaSeparated(
       header['issuer']?.toString(),
     );
+
+    if (overrideAx.isNotEmpty && overrideAy.isNotEmpty) {
+      final normalizedOverrideAx = _normalizeFieldNumber(overrideAx);
+      final normalizedOverrideAy = _normalizeFieldNumber(overrideAy);
+      if (!isIssuerPubKeyMatchAlreadyVerified) {
+        if (parsed == null) {
+          throw const FormatException(
+            'Issuer signing key could not be derived from header issuer for '
+            'matching. Set isIssuerPubKeyMatchAlreadyVerified: true to skip '
+            'this check.',
+          );
+        }
+        if (parsed.ax != normalizedOverrideAx || parsed.ay != normalizedOverrideAy) {
+          throw const FormatException(
+            'Issuer signing key mismatch: derived key from header issuer does '
+            'not match issuerPublicKeyAx/issuerPublicKeyAy.',
+          );
+        }
+      }
+      return _IssuerPublicKey(
+        ax: normalizedOverrideAx,
+        ay: normalizedOverrideAy,
+      );
+    }
+
     if (parsed != null) {
       return _IssuerPublicKey(ax: parsed.ax, ay: parsed.ay);
     }
+
     throw const FormatException(
-      'Issuer signing key: set issuerPublicKeyAx and issuerPublicKeyAy, '
+      'Issuer signing key: provide issuerPublicKeyAx/issuerPublicKeyAy, '
       'or use header issuer as comma-separated Ax,Ay.',
     );
   }
