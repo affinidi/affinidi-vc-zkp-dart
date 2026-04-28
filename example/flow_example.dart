@@ -1,4 +1,4 @@
-// Run from the repository root (after `cargo build --release` in `lib/rust_eddsa_helper`):
+// Run from the repository root:
 //   dart run example/flow_example.dart
 //
 // Reference Circom sources for field layout and public signals live under:
@@ -98,7 +98,8 @@ Future<void> main() async {
       .join();
   final challengeNonceBi = BigInt.parse(challengeNonceHex, radix: 16);
   final challengeDigest = await crypto.poseidonHashFieldElements(
-    <String>[challengeNonceBi.toString()],
+    // Domain-tagged two-input challenge hash to avoid [x] vs [x,0] ambiguity.
+    <String>['1', challengeNonceBi.toString()],
   );
 
   final challengeSig = await holder.signPreparedDigest(

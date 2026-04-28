@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:test/test.dart';
+import 'package:vc_zkp/src/commitments.dart';
 import 'package:vc_zkp/src/rust_eddsa_helper_ffi.dart';
 import 'package:vc_zkp/vc_zkp.dart';
 
@@ -13,7 +14,20 @@ class _FakeRustEddsaHelper implements RustEddsaHelperFfi {
   @override
   Future<String> poseidonHashFieldElements(List<String> inputs) async {
     fieldHashCalls.add(List<String>.from(inputs));
-    return 'hash:${inputs.join('|')}';
+    var acc = BigInt.zero;
+    for (final input in inputs) {
+      for (final unit in input.codeUnits) {
+        acc = (acc * BigInt.from(257) + BigInt.from(unit)) %
+            BigInt.parse(
+              '21888242871839275222246405745257275088548364400416034343698204186575808495617',
+            );
+      }
+      acc = (acc + BigInt.from(17)) %
+          BigInt.parse(
+            '21888242871839275222246405745257275088548364400416034343698204186575808495617',
+          );
+    }
+    return acc.toString();
   }
 
   @override
@@ -99,7 +113,8 @@ void main() {
   });
 
   group('VcIssuer', () {
-    test('builds header commitments in alphabetical key order', () async {
+    test('builds header commitments in alphabetical key order with indexes',
+        () async {
       final crypto = _FakeRustEddsaHelper();
       final issuer = VcIssuer(crypto: crypto);
 
@@ -122,10 +137,10 @@ void main() {
         'version',
       ];
       for (var index = 0; index < sortedHeaderKeys.length; index += 1) {
-        expect(
-          crypto.fieldHashCalls[index].first,
-          equals(_inlineFelt(sortedHeaderKeys[index])),
-        );
+        final commitmentCall = crypto.fieldHashCalls[index];
+        expect(commitmentCall.first, equals(index.toString()));
+        expect(commitmentCall[1], equals(_inlineFelt(sortedHeaderKeys[index])));
+        expect(commitmentCall[2], isIn(<String>['0', '1', '2', '3', '4', '5']));
       }
     });
 
@@ -146,8 +161,151 @@ void main() {
     });
   });
 
+  group('buildDocumentDigest', () {
+    test('rejects single-element commitment array for domain separation',
+        () async {
+      final crypto = _FakeRustEddsaHelper();
+
+      expect(
+        () => buildDocumentDigest(
+          headerCommitments: const <String>['only-one'],
+          payloadCommitments: const <String>[],
+          helper: crypto,
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.message,
+            'message',
+            contains('single element'),
+          ),
+        ),
+      );
+    });
+
+    test('field commitments distinguish numeric and string values', () async {
+      final crypto = _FakeRustEddsaHelper();
+      final intCommitment = await buildFieldCommitment(
+        index: 0,
+        fieldName: 'age',
+        value: 28,
+        helper: crypto,
+      );
+      final stringCommitment = await buildFieldCommitment(
+        index: 0,
+        fieldName: 'age',
+        value: '28',
+        helper: crypto,
+      );
+      final hexStringCommitment = await buildFieldCommitment(
+        index: 0,
+        fieldName: 'age',
+        value: '0x1C',
+        helper: crypto,
+      );
+
+      expect(intCommitment, isNot(equals(stringCommitment)));
+      expect(stringCommitment, isNot(equals(hexStringCommitment)));
+      expect(intCommitment, isNot(equals(hexStringCommitment)));
+    });
+
+    test('field commitments distinguish null, bool, int and string zero', () async {
+      final crypto = _FakeRustEddsaHelper();
+      final cNull = await buildFieldCommitment(
+        index: 0,
+        fieldName: 'verified',
+        value: null,
+        helper: crypto,
+      );
+      final cBool = await buildFieldCommitment(
+        index: 0,
+        fieldName: 'verified',
+        value: false,
+        helper: crypto,
+      );
+      final cInt = await buildFieldCommitment(
+        index: 0,
+        fieldName: 'verified',
+        value: 0,
+        helper: crypto,
+      );
+      final cString = await buildFieldCommitment(
+        index: 0,
+        fieldName: 'verified',
+        value: '0',
+        helper: crypto,
+      );
+
+      expect(cNull, isNot(equals(cBool)));
+      expect(cNull, isNot(equals(cInt)));
+      expect(cNull, isNot(equals(cString)));
+      expect(cBool, isNot(equals(cInt)));
+      expect(cBool, isNot(equals(cString)));
+      expect(cInt, isNot(equals(cString)));
+    });
+
+    test('payload commitments reject reserved disclosure field names', () async {
+      final crypto = _FakeRustEddsaHelper();
+      expect(
+        () => buildPayloadCommitments(
+          const <Disclosure>[
+            Disclosure(field: 'holderAx', value: '123'),
+          ],
+          crypto,
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.message,
+            'message',
+            contains('reserved for header use'),
+          ),
+        ),
+      );
+    });
+
+    test('payload commitments are deterministic regardless of input order',
+        () async {
+      final crypto = _FakeRustEddsaHelper();
+      final first = await buildPayloadCommitments(
+        const <Disclosure>[
+          Disclosure(field: 'zField', value: 1),
+          Disclosure(field: 'aField', value: 2),
+        ],
+        crypto,
+      );
+      final second = await buildPayloadCommitments(
+        const <Disclosure>[
+          Disclosure(field: 'aField', value: 2),
+          Disclosure(field: 'zField', value: 1),
+        ],
+        crypto,
+      );
+
+      expect(first, equals(second));
+    });
+
+    test('payload commitments reject duplicate field names', () async {
+      final crypto = _FakeRustEddsaHelper();
+      expect(
+        () => buildPayloadCommitments(
+          const <Disclosure>[
+            Disclosure(field: 'age', value: 18),
+            Disclosure(field: 'age', value: 19),
+          ],
+          crypto,
+        ),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.message,
+            'message',
+            contains('Duplicate payload field'),
+          ),
+        ),
+      );
+    });
+  });
+
   group('VcHolder', () {
-    test('reuses commitments from document when present', () async {
+    test('always rebuilds commitments from document payload', () async {
       final crypto = _FakeRustEddsaHelper();
       final holder = VcHolder(crypto: crypto);
       final document = SignedVcDocument(
@@ -162,9 +320,9 @@ void main() {
 
       final inputs = await holder.prepareForCircuit(document);
 
-      expect(inputs.headerCommitments, equals(const <String>['h1', 'h2']));
-      expect(inputs.payloadCommitments, equals(const <String>['p1']));
-      expect(inputs.finalArray, equals(const <String>['h1', 'h2', 'p1']));
+      expect(inputs.headerCommitments, isNot(equals(const <String>['h1', 'h2'])));
+      expect(inputs.payloadCommitments, isNot(equals(const <String>['p1'])));
+      expect(inputs.finalArray, isNot(equals(const <String>['h1', 'h2', 'p1'])));
       expect(inputs.issuerAx, '123');
       expect(inputs.issuerAy, '456');
       expect(inputs.holderAx, 'holder-ax');
@@ -174,7 +332,7 @@ void main() {
       expect(witness['issuerAy'], '456');
       expect(witness['holderAx'], 'holder-ax');
       expect(witness['holderAy'], 'holder-ay');
-      expect(crypto.fieldHashCalls, isEmpty);
+      expect(crypto.fieldHashCalls, isNotEmpty);
     });
 
     test('rebuilds commitments if missing in json document', () async {
@@ -219,7 +377,11 @@ void main() {
         issuerPrivateKeyHex: _randomPrivateKeyHex(),
       );
 
-      final result = await verifier.verifyDocument(document);
+      final result = await verifier.verifyDocument(
+        document,
+        issuerPublicKeyAx: '123',
+        issuerPublicKeyAy: '456',
+      );
 
       expect(result.valid, isTrue);
       expect(result.signatureValid, isTrue);
@@ -250,14 +412,19 @@ void main() {
         ),
       );
 
-      final result = await verifier.verifyDocument(tampered);
+      final result = await verifier.verifyDocument(
+        tampered,
+        issuerPublicKeyAx: '123',
+        issuerPublicKeyAy: '456',
+      );
 
       expect(result.valid, isFalse);
       expect(result.signatureValid, isFalse);
       expect(result.error, contains('Signature verification failed'));
     });
 
-    test('DID issuer needs explicit public key for verification', () async {
+    test('DID issuer with explicit key fails unless app-match is pre-verified',
+        () async {
       final crypto = _FakeRustEddsaHelper();
       final issuer = VcIssuer(crypto: crypto);
       final verifier = VcVerifier(crypto: crypto);
@@ -270,17 +437,100 @@ void main() {
         issuerPrivateKeyHex: _randomPrivateKeyHex(),
       );
 
-      final withoutKey = await verifier.verifyDocument(document);
-      expect(withoutKey.valid, isFalse);
-      expect(withoutKey.error, contains('Issuer signing key'));
-
-      final withKey = await verifier.verifyDocument(
+      final withoutBypass = await verifier.verifyDocument(
         document,
         issuerPublicKeyAx: '123',
         issuerPublicKeyAy: '456',
       );
-      expect(withKey.valid, isTrue);
-      expect(withKey.signatureValid, isTrue);
+      expect(withoutBypass.valid, isFalse);
+      expect(
+        withoutBypass.error,
+        contains('could not be derived from header issuer for matching'),
+      );
+
+      final withBypass = await verifier.verifyDocument(
+        document,
+        issuerPublicKeyAx: '123',
+        issuerPublicKeyAy: '456',
+        isIssuerPubKeyMatchAlreadyVerified: true,
+      );
+      expect(withBypass.valid, isTrue);
+      expect(withBypass.signatureValid, isTrue);
+    });
+
+    test('can skip issuer header/key match when already verified by app', () async {
+      final crypto = _FakeRustEddsaHelper();
+      final issuer = VcIssuer(crypto: crypto);
+      final verifier = VcVerifier(crypto: crypto);
+
+      final document = await issuer.createSignedDocument(
+        header: _buildHeader(),
+        disclosures: const <Disclosure>[
+          Disclosure(field: 'age', value: 28),
+        ],
+        issuerPrivateKeyHex: _randomPrivateKeyHex(),
+      );
+
+      final skipped = await verifier.verifyDocument(
+        document,
+        issuerPublicKeyAx: '999',
+        issuerPublicKeyAy: '888',
+        isIssuerPubKeyMatchAlreadyVerified: true,
+      );
+      expect(skipped.valid, isFalse);
+      expect(skipped.error, contains('Signature verification failed'));
+    });
+
+    test('fails when provided key mismatches parseable issuer header', () async {
+      final crypto = _FakeRustEddsaHelper();
+      final issuer = VcIssuer(crypto: crypto);
+      final verifier = VcVerifier(crypto: crypto);
+
+      final document = await issuer.createSignedDocument(
+        header: _buildHeader(issuer: '123,456'),
+        disclosures: const <Disclosure>[
+          Disclosure(field: 'age', value: 28),
+        ],
+        issuerPrivateKeyHex: _randomPrivateKeyHex(),
+      );
+
+      final result = await verifier.verifyDocument(
+        document,
+        issuerPublicKeyAx: '111',
+        issuerPublicKeyAy: '222',
+      );
+      expect(result.valid, isFalse);
+      expect(result.error, contains('Issuer signing key mismatch'));
+    });
+
+    test('fails when visible header is tampered but commitments are reused',
+        () async {
+      final crypto = _FakeRustEddsaHelper();
+      final issuer = VcIssuer(crypto: crypto);
+      final verifier = VcVerifier(crypto: crypto);
+
+      final document = await issuer.createSignedDocument(
+        header: _buildHeader(),
+        disclosures: const <Disclosure>[
+          Disclosure(field: 'age', value: 28),
+        ],
+        issuerPrivateKeyHex: _randomPrivateKeyHex(),
+      );
+
+      final tampered = SignedVcDocument(
+        header: <String, Object?>{
+          ...document.header,
+          'schema': 'attacker-schema',
+        },
+        disclosures: document.disclosures,
+        headerCommitments: document.headerCommitments,
+        payloadCommitments: document.payloadCommitments,
+        signature: document.signature,
+      );
+
+      final result = await verifier.verifyDocument(tampered);
+      expect(result.valid, isFalse);
+      expect(result.error, contains('Header commitments mismatch'));
     });
   });
 }

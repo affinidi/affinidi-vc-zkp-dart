@@ -1,0 +1,38 @@
+{
+  "aarch64-apple-darwin": {
+    "sha256": "d3eabe196ea0bfadd32996844e785de8d349b65806e536f4351c08233b8449de",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-aarch64-apple-darwin.dylib"
+  },
+  "aarch64-apple-ios": {
+    "sha256": "9cfd81757b99be086ed60c06394e06858ee282685dd6aa1312413b561008b900",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-aarch64-apple-ios.dylib"
+  },
+  "aarch64-apple-ios-sim": {
+    "sha256": "27d29d1fd1fb3175c8e8ecc4a77eeee0df34676a603691171c6e0b171fabe748",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-aarch64-apple-ios-sim.dylib"
+  },
+  "aarch64-linux-android": {
+    "sha256": "a1d3ca98bf8b906c866083a4049bbcbe8132587a5ea06ee77f8bc5fd2005a09d",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-aarch64-linux-android.so"
+  },
+  "armv7-linux-androideabi": {
+    "sha256": "69b29e51d71bbf52ca23c1b4a91e0cdc3a3889f2a27072d3e839e1d87e2e0ff8",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-armv7-linux-androideabi.so"
+  },
+  "i686-linux-android": {
+    "sha256": "3b65bbffaf12e2ea7fa5e110f5a951af213d51b4794958ec7c21d75b5e3beb50",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-i686-linux-android.so"
+  },
+  "x86_64-apple-darwin": {
+    "sha256": "f97ad485b715c45e6f7cdba089759f01a86dfcb3cc56119d30e66d44cb5b8667",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-x86_64-apple-darwin.dylib"
+  },
+  "x86_64-apple-ios": {
+    "sha256": "bfc6164e3c629eae01be1d25335ab6f979f749cce08eb91f40b70588de3eec2e",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-x86_64-apple-ios.dylib"
+  },
+  "x86_64-linux-android": {
+    "sha256": "fd118a13da71678d2f447c27a342385a4b7742a6984e312de0d557b62dc61161",
+    "url": "https://github.com/affinidi/affinidi-vc-zkp-dart/releases/download/prebuilds-ed810043b6a72c208dd8a9ffae5750d382d475d25276ee890ec7ef5c79ba391f/rust_eddsa_helper-x86_64-linux-android.so"
+  }
+}

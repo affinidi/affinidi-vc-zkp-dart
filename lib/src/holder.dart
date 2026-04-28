@@ -74,18 +74,14 @@ class VcHolder {
   Future<HolderCircuitInputs> prepareForCircuit(
     SignedVcDocument document,
   ) async {
-    final headerCommitments = document.headerCommitments.isNotEmpty
-        ? document.headerCommitments
-        : await buildHeaderCommitments(
-            document.header,
-            _crypto,
-          );
-    final payloadCommitments = document.payloadCommitments.isNotEmpty
-        ? document.payloadCommitments
-        : await buildPayloadCommitments(
-            document.disclosures,
-            _crypto,
-          );
+    final headerCommitments = await buildHeaderCommitments(
+      document.header,
+      _crypto,
+    );
+    final payloadCommitments = await buildPayloadCommitments(
+      document.disclosures,
+      _crypto,
+    );
     final issuerRaw = document.header['issuer']?.toString() ?? '';
     final parsed = tryParseIssuerBabyJubCommaSeparated(issuerRaw);
     final issuerAx = parsed?.ax ?? '';

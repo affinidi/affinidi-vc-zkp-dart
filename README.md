@@ -8,7 +8,12 @@ zero-knowledge verifiable credentials using:
 
 - Poseidon hash
 - BabyJubJub EdDSA signatures
-- Rust FFI helper (`lib/rust_eddsa_helper`)
+- Rust FFI helper ([`affinidi-zkp-crypto-rs`](https://github.com/affinidi/affinidi-zkp-crypto-rs))
+
+## Repository layout
+
+- `.` (root): Dart package (`vc_zkp`) with hooks, prebuild metadata, and pub.dev flow.
+- Rust native crypto package: [`affinidi/affinidi-zkp-crypto-rs`](https://github.com/affinidi/affinidi-zkp-crypto-rs).
 
 ## What this library provides
 
@@ -71,14 +76,8 @@ The signed document JSON shape is:
     { "field": "age", "value": 28 },
     { "field": "nationality", "value": "USA" }
   ],
-  "header_commitments": [
-    "poseidon(field_name_0, value_0)",
-    "poseidon(field_name_1, value_1)"
-  ],
-  "payload_commitments": [
-    "poseidon(field_name_0, value_0)",
-    "poseidon(field_name_1, value_1)"
-  ],
+  "header_commitments": ["<poseidon(index,name,type,value)_0>"],
+  "payload_commitments": ["<poseidon(index,name,type,value)_0>"],
   "signature": {
     "R8": ["0x...", "0x..."],
     "S": "0x..."
@@ -93,9 +92,9 @@ The signed document JSON shape is:
 - Header commitments are built in **alphabetical key order** of `header`
   (`issuer` is one commitment input; `holderAx` / `holderAy` stay split for
   circuit-friendly coordinates).
-- Payload commitments are built in disclosure list order.
-- Each commitment is:
-  - `poseidon(fieldNameFelt, valueFelt)`
+- Payload commitments are sorted deterministically by disclosure field name.
+- Each commitment is indexed and typed:
+  - `commitment = Poseidon([index, encodeString(fieldName), typeTag, encodeValueByType(value)])`
 
 ### 2) Digest to sign
 
@@ -116,6 +115,22 @@ For field names and string values:
 - If UTF-8 byte length `> 31`:
   - bytes -> bits -> Poseidon(bits) using Rust helper
 
+Value encoding is strongly typed:
+
+- `null` -> type tag `0`
+- `bool` -> type tag `1`
+- `int`/`BigInt` -> type tag `2`
+- `String` (always as string, never numeric-coerced) -> type tag `3`
+- `Map` -> type tag `4` with canonical JSON encoding
+- `List` -> type tag `5` with canonical JSON encoding
+
+Why this extra structure exists:
+
+- It binds field position (`index`), field identity (`name`), and value type
+  into a single commitment preimage.
+- This prevents ambiguous claim interpretations across different runtimes and
+  keeps proving/verifying behavior deterministic.
+
 This avoids SHA-256 in the string-to-field path and stays circuit-oriented.
 
 ## Example: Untraceable ZK VC Circom witness inputs
@@ -127,7 +142,6 @@ To print a fresh random demo (issuer/holder keys, blinder, challenge nonce) and
 the corresponding flat witness map for those circuits (stdout only, no files):
 
 ```bash
-cd lib/rust_eddsa_helper && cargo build --release && cd ../..
 dart run example/flow_example.dart
 ```
 
@@ -158,6 +172,8 @@ final disclosures = <Disclosure>[
   const Disclosure(field: 'age', value: 28),
   const Disclosure(field: 'nationality', value: 'USA'),
 ];
+// Payload fields are sorted deterministically by field name before indexing.
+// Duplicate payload field names are rejected.
 
 final doc = await issuer.createSignedDocument(
   header: header,
@@ -195,45 +211,40 @@ final signature = await holder.signPreparedDigest(
 ```dart
 final verifier = VcVerifier();
 
+// If header['issuer'] is comma-separated Ax,Ay, verifier can derive key from it.
 final result = await verifier.verifyDocument(doc);
 
-// If header['issuer'] is a DID (or anything other than comma-separated Ax,Ay),
-// pass the resolved BabyJub public key explicitly:
-final resultWithDid = await verifier.verifyDocument(
+// Optional: provide app-resolved issuer public key explicitly (e.g. DID flow).
+final resultWithKey = await verifier.verifyDocument(
   doc,
   issuerPublicKeyAx: resolvedAxDecimal,
   issuerPublicKeyAy: resolvedAyDecimal,
 );
+
+// Optional: if your app already reconciled issuer identifier -> key mapping
+// (for example DID resolution), skip header issuer key matching:
+final resultWithDid = await verifier.verifyDocument(
+  doc,
+  issuerPublicKeyAx: resolvedAxDecimal,
+  issuerPublicKeyAy: resolvedAyDecimal,
+  isIssuerPubKeyMatchAlreadyVerified: true,
+);
 ```
 
-For EdDSA, `VcVerifier` uses `issuerPublicKeyAx` / `issuerPublicKeyAy` when
-you pass them; otherwise it parses `header['issuer']` as comma-separated
-`Ax,Ay` (decimal or `0x` hex). DID resolution stays outside this package.
+For EdDSA, `VcVerifier` accepts optional `issuerPublicKeyAx` /
+`issuerPublicKeyAy`. If they are provided, verifier checks them against
+parseable `header['issuer']` value (`Ax,Ay`) by default.
 
 ## Notes about missing commitments
 
-When holder prepares circuit inputs:
+When holder prepares circuit inputs, commitments are always rebuilt from
+`header` + `disclosures`.
 
-- If `header_commitments` and `payload_commitments` are present in document,
-  they are reused.
-- If they are missing, they are rebuilt from `header` + `disclosures`.
+## Native runtime note
 
-## Rust helper requirement
-
-This package expects the Rust helper library from `lib/rust_eddsa_helper`.
-
-For local development on macOS:
-
-```bash
-cd lib/rust_eddsa_helper
-cargo build --release
-```
-
-The Dart FFI layer attempts to load:
-
-- `librust_eddsa_helper.dylib` (macOS)
-- `librust_eddsa_helper.so` (Linux/Android)
-- `rust_eddsa_helper.dll` (Windows)
+Native libraries are resolved via Dart hooks from prebuilt release assets
+described in `prebuilds/manifest.json`. App developers using this package do not
+need to build Rust manually.
 
 ## Running tests
 
@@ -261,12 +272,45 @@ Run all tests (unit + integration):
 dart test --run-skipped
 ```
 
-If integration tests fail with library loading errors, rebuild Rust helper:
+If integration tests fail with library loading errors:
 
 ```bash
-cd lib/rust_eddsa_helper
-cargo build --release
+dart pub get
+dart test --run-skipped
 ```
+
+## Download native debug symbols
+
+When your app crashes inside `rust_eddsa_helper`, download the symbol archives
+that match the native prebuild release used by this package, then upload them
+to your crash backend (Sentry, Crashlytics, Play Console, or local symbolication
+tools).
+
+Use:
+
+```bash
+./tool/download_prebuild_symbols.sh
+```
+
+Useful options:
+
+```bash
+# specific triples only
+./tool/download_prebuild_symbols.sh \
+  --triple aarch64-apple-ios \
+  --triple aarch64-linux-android
+
+# custom output directory
+./tool/download_prebuild_symbols.sh --output-dir ./.native-symbols
+```
+
+Notes:
+
+- Apple symbols are downloaded as `*.dSYM.zip`.
+- Android symbols are downloaded as `*.so.debug.zip`.
+- The script reads `prebuilds/manifest.json` and uses `symbols.url` when present.
+  If absent, it derives a symbols URL from the binary URL.
+- If the release does not contain symbols yet, you will see `404` warnings.
 
 ## Current limitations
 

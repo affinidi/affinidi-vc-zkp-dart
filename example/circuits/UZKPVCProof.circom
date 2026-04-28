@@ -6,17 +6,21 @@ include "circomlib/circuits/poseidon.circom";
 /// Untraceable ZK VC proof: document digest = Poseidon([...header_commitments, ...payload_commitments])
 /// (`NUM_HEADER + NUM_PAYLOAD` inputs), then EdDSAPoseidon over that digest.
 /// Holder is bound to `header_commitments[1]` and `[2]` (needs `NUM_HEADER >= 3`)
-/// as poseidon(fieldName, holderCoord) for keys `holderAx` / `holderAy` in
+/// with indexed typed commitments:
+/// commitment = Poseidon([index, fieldNameRaw, TYPE_INT, holderCoord])
+/// for keys `holderAx` / `holderAy` in
 /// alphabetical header order (Dart VC demo uses 7 + 5). For Dart/Rust FFI
 /// Public `blinder_factor` and `blinded_digest` link to other circuits:
 /// `blinded_digest = Poseidon(document_digest, blinder_factor)`.
 template UZKPVCProof(NUM_HEADER, NUM_PAYLOAD) {
+    var TYPE_INT = 2;
+
     // Header JSON keys as UTF-8 string -> field element (hex BE, len <= 31);
     // must match Dart `stringToFieldElement` for those names.
     // Plain text: "holderAx"
-    var HOLDER_AX_FIELD_NAME = 7525352680813904248;
+    var HOLDER_AX_FIELD_NAME_RAW = 7525352680813904248;
     // Plain text: "holderAy"
-    var HOLDER_AY_FIELD_NAME = 7525352680813904249;
+    var HOLDER_AY_FIELD_NAME_RAW = 7525352680813904249;
 
     signal input header_commitments[NUM_HEADER];
     signal input payload_commitments[NUM_PAYLOAD];
@@ -57,14 +61,18 @@ template UZKPVCProof(NUM_HEADER, NUM_PAYLOAD) {
     digestBlinder.inputs[1] <== blinder_factor;
     blinded_digest <== digestBlinder.out;
 
-    component bindHolderAx = Poseidon(2);
-    bindHolderAx.inputs[0] <== HOLDER_AX_FIELD_NAME;
-    bindHolderAx.inputs[1] <== holderAx;
+    component bindHolderAx = Poseidon(4);
+    bindHolderAx.inputs[0] <== 1;
+    bindHolderAx.inputs[1] <== HOLDER_AX_FIELD_NAME_RAW;
+    bindHolderAx.inputs[2] <== TYPE_INT;
+    bindHolderAx.inputs[3] <== holderAx;
     bindHolderAx.out === header_commitments[1];
 
-    component bindHolderAy = Poseidon(2);
-    bindHolderAy.inputs[0] <== HOLDER_AY_FIELD_NAME;
-    bindHolderAy.inputs[1] <== holderAy;
+    component bindHolderAy = Poseidon(4);
+    bindHolderAy.inputs[0] <== 2;
+    bindHolderAy.inputs[1] <== HOLDER_AY_FIELD_NAME_RAW;
+    bindHolderAy.inputs[2] <== TYPE_INT;
+    bindHolderAy.inputs[3] <== holderAy;
     bindHolderAy.out === header_commitments[2];
 
     component challengeEdDSAVerifier = EdDSAPoseidonVerifier();
