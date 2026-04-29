@@ -314,6 +314,5 @@ Notes:
 
 ## Current limitations
 
-- Document verification uses the Rust FFI EdDSA verifier; production flows
+- Document verification uses the Rust FFI EdDSA verifier (its for internal tests, debug mostly); production flows
   still typically verify a ZKP presentation rather than this full document.
-- This package does not implement production ZKP-presentation verification yet.
