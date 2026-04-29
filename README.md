@@ -312,7 +312,7 @@ Notes:
   If absent, it derives a symbols URL from the binary URL.
 - If the release does not contain symbols yet, you will see `404` warnings.
 
-## Current limitations
+## Implementation notes:
 
 - Document verification uses the Rust FFI EdDSA verifier (its for internal tests, debug mostly); production flows
   still typically verify a ZKP presentation rather than this full document.
