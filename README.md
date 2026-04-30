@@ -1,5 +1,14 @@
 # Affinidi VCs for ZKPs - Dart
 
+> This package is a Dart SDK for untraceable ZK-VC workflows: issuers create and
+> sign VC data, holders prepare deterministic circuit inputs, and verifiers can
+> run local document checks mainly for testing and integration.
+>
+> End-to-end note: after signing and circuit input preparation, generate and
+> verify the actual ZKP with Circom-compatible proving tooling/libraries
+> (for example, `circom-witnesscalc` + `rapidsnark` / `snarkjs`, including
+> Dart/Flutter wrappers where applicable).
+
 Read **[docs/protocol.md](docs/protocol.md)** first for the protocol, credential
 layout, and how Untraceable-ZK-VC-style circuits fit the untraceable ZK-VC model.
 

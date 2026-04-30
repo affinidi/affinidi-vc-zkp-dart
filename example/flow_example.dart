@@ -12,6 +12,12 @@
 //
 // Typical flow: compile circuits → trusted setup → generate witness (circom-witnesscalc
 // or WASM calculator) → prove (rapidsnark / snarkjs) → verify off-device or on-chain.
+//
+// E2E boundary note:
+// - This example covers document signing and deterministic circuit input preparation.
+// - Next step is to generate a ZKP against your Circom circuit using external tooling
+//   (for Dart/Flutter apps, see the libraries listed above).
+// - Verifier then verifies the resulting proof with the same proving stack/tooling.
 
 import 'dart:convert';
 import 'dart:math';
