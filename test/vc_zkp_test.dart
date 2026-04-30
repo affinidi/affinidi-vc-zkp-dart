@@ -79,9 +79,9 @@ Map<String, Object?> _buildHeader({
     'holderAx': '789',
     'holderAy': '987',
     'version': '1',
-    'issued_at': 1712345678,
+    'issued_at': 1700000000,
     'schema': schema,
-    'expires_at': 1743881678,
+    'expires_at': 1900000000,
     'issuer': issuer,
   };
 }
@@ -501,6 +501,87 @@ void main() {
       );
       expect(result.valid, isFalse);
       expect(result.error, contains('Issuer signing key mismatch'));
+    });
+
+    test('rejects expired credential before checking commitments', () async {
+      final crypto = _FakeRustEddsaHelper();
+      final issuer = VcIssuer(crypto: crypto);
+      final verifier = VcVerifier(crypto: crypto);
+
+      final expiredHeader = <String, Object?>{
+        ..._buildHeader(),
+        'issued_at': 1000000000,
+        'expires_at': 1100000000,
+      };
+      final document = await issuer.createSignedDocument(
+        header: expiredHeader,
+        disclosures: const <Disclosure>[Disclosure(field: 'age', value: 28)],
+        issuerPrivateKeyHex: _randomPrivateKeyHex(),
+      );
+
+      final result = await verifier.verifyDocument(
+        document,
+        issuerPublicKeyAx: '123',
+        issuerPublicKeyAy: '456',
+      );
+      expect(result.valid, isFalse);
+      expect(result.error, contains('expired'));
+    });
+
+    test('rejects credential whose issued_at is in the future', () async {
+      final crypto = _FakeRustEddsaHelper();
+      final issuer = VcIssuer(crypto: crypto);
+      final verifier = VcVerifier(crypto: crypto);
+
+      final futureHeader = <String, Object?>{
+        ..._buildHeader(),
+        'issued_at': 9999999999,
+        'expires_at': 9999999999 + 86400,
+      };
+      final document = await issuer.createSignedDocument(
+        header: futureHeader,
+        disclosures: const <Disclosure>[Disclosure(field: 'age', value: 28)],
+        issuerPrivateKeyHex: _randomPrivateKeyHex(),
+      );
+
+      final result = await verifier.verifyDocument(
+        document,
+        issuerPublicKeyAx: '123',
+        issuerPublicKeyAy: '456',
+      );
+      expect(result.valid, isFalse);
+      expect(result.error, contains('not yet valid'));
+    });
+
+    test('rejects credential with missing expires_at', () async {
+      final crypto = _FakeRustEddsaHelper();
+      final issuer = VcIssuer(crypto: crypto);
+      final verifier = VcVerifier(crypto: crypto);
+
+      // Build a valid document first, then strip expires_at from the header
+      // to simulate a malformed document reaching the verifier.
+      final valid = await issuer.createSignedDocument(
+        header: _buildHeader(),
+        disclosures: const <Disclosure>[Disclosure(field: 'age', value: 28)],
+        issuerPrivateKeyHex: _randomPrivateKeyHex(),
+      );
+      final noExpiryHeader = Map<String, Object?>.from(valid.header)
+        ..remove('expires_at');
+      final document = SignedVcDocument(
+        header: noExpiryHeader,
+        disclosures: valid.disclosures,
+        headerCommitments: valid.headerCommitments,
+        payloadCommitments: valid.payloadCommitments,
+        signature: valid.signature,
+      );
+
+      final result = await verifier.verifyDocument(
+        document,
+        issuerPublicKeyAx: '123',
+        issuerPublicKeyAy: '456',
+      );
+      expect(result.valid, isFalse);
+      expect(result.error, contains('expires_at'));
     });
 
     test('fails when visible header is tampered but commitments are reused',

@@ -7,7 +7,7 @@
 > End-to-end note: after signing and circuit input preparation, generate and
 > verify the actual ZKP with Circom-compatible proving tooling/libraries
 > (for example, `circom-witnesscalc` + `rapidsnark` / `snarkjs`, including
-> Dart/Flutter wrappers where applicable).
+> Dart/Flutter wrappers).
 
 Read **[docs/protocol.md](docs/protocol.md)** first for the protocol, credential
 layout, and how Untraceable-ZK-VC-style circuits fit the untraceable ZK-VC model.

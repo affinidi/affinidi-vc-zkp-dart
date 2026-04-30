@@ -14,8 +14,8 @@ String _randomPrivateKeyHex() {
 Map<String, Object?> _header(String issuerCommaSeparated) {
   return <String, Object?>{
     'version': '1',
-    'issued_at': 1712345678,
-    'expires_at': 1743881678,
+    'issued_at': 1700000000,
+    'expires_at': 1900000000,
     'issuer': issuerCommaSeparated,
     'holderAx': '5299619240641551281634865583518297030282874472190772894086521144482721001553',
     'holderAy': '16950150798460657717958625567821834550301663161624707787222815936182638968203',

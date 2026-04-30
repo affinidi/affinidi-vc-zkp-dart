@@ -60,6 +60,11 @@ class VcVerifier {
     bool isIssuerPubKeyMatchAlreadyVerified = false,
   }) async {
     try {
+      final temporalCheck = _checkTemporalValidity(document.header);
+      if (temporalCheck != null) {
+        return VerificationResult(valid: false, error: temporalCheck);
+      }
+
       final computedHeaderCommitments = await buildHeaderCommitments(
         document.header,
         _crypto,
@@ -194,6 +199,39 @@ class VcVerifier {
       return BigInt.parse(trimmed).toString();
     }
     return trimmed;
+  }
+
+  /// Returns an error string when the credential is outside its validity
+  /// window, or `null` when the timestamps are present and the credential is
+  /// currently valid.
+  String? _checkTemporalValidity(Map<String, Object?> header) {
+    final issuedAtRaw = header['issued_at'];
+    final expiresAtRaw = header['expires_at'];
+
+    final issuedAt = issuedAtRaw is int
+        ? issuedAtRaw
+        : int.tryParse(issuedAtRaw?.toString() ?? '');
+    final expiresAt = expiresAtRaw is int
+        ? expiresAtRaw
+        : int.tryParse(expiresAtRaw?.toString() ?? '');
+
+    if (issuedAt == null) {
+      return 'Credential header is missing a valid issued_at timestamp.';
+    }
+    if (expiresAt == null) {
+      return 'Credential header is missing a valid expires_at timestamp.';
+    }
+
+    final nowSeconds =
+        DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    if (nowSeconds < issuedAt) {
+      return 'Credential is not yet valid (issued_at is in the future).';
+    }
+    if (nowSeconds > expiresAt) {
+      return 'Credential has expired.';
+    }
+    return null;
   }
 }
 
