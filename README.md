@@ -44,8 +44,8 @@ The lifecycle of a ZK-VC involves three distinct, highly controlled stages:
 The package utilizes robust, high-performance cryptographic primitives.
 
 ### Cryptographic Standards
-- **Signature Scheme:** **EdDSA** is used for digital signatures, specifically employing the **BabyJubJub** key type.
-- **Crypto Engine:** Core cryptographic operations (including complex EdDSA verification and advanced hashing) are encapsulated in a **Rust Foreign Function Interface (FFI)** bridge (`affinidi-zkp-crypto-rs`). This ensures optimal performance and memory safety, integrating high performance into the Dart/Flutter environment.
+- **Signature Scheme:** **EdDSA** is used for digital signatures, specifically over the **BabyJubJub elliptic curve**.
+- **Crypto Engine:** Core cryptographic operations (including complex EdDSA verification and advanced hashing) are handled via a **Rust Foreign Function Interface (FFI)** bridge (`affinidi-zkp-crypto-rs`). This ensures optimal performance, memory safety, and reliable integration into Dart/Flutter applications.
 
 ## Commitment & Data Integrity
 
