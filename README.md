@@ -1,74 +1,80 @@
-# Affinidi VCs for ZKPs - Dart
+# Affinidi VCs for ZKPs
 
-> This package is a Dart SDK for untraceable ZK-VC workflows: issuers create and
-> sign VC data, holders prepare deterministic circuit inputs, and verifiers can
-> run local document checks mainly for testing and integration.
->
-> End-to-end note: after signing and circuit input preparation, generate and
-> verify the actual ZKP with Circom-compatible proving tooling/libraries
-> (for example, `circom-witnesscalc` + `rapidsnark` / `snarkjs`, including
-> Dart/Flutter wrappers).
+The Affinidi VCs for ZKPs package provides a specialized Dart SDK for implementing untraceable Zero-Knowledge Proof Verifiable Credential (ZK-VC) workflows. This library enables issuers to create and sign VC data, holders to prepare deterministic circuit inputs, and allows verifiers to run local document checks for testing and integration.
 
-Read **[docs/protocol.md](docs/protocol.md)** first for the protocol, credential
-layout, and how Untraceable-ZK-VC-style circuits fit the untraceable ZK-VC model.
+> **⚠️ IMPORTANT SECURITY AND PRIVACY NOTE:**
+> This package is a cryptographic tool and does not process personal data outside of the structured data defined by the user. When integrated into a broader system that handles personally identifiable information (PII), users are solely responsible for ensuring that the entire use case complies with all applicable privacy laws and data protection obligations (e.g., GDPR).
 
-Dart implementation for creating, preparing, and verifying untraceable
-zero-knowledge verifiable credentials using:
+**Protocol Guide:**
+While the library provides implementation tools, we encourage you to start by exploring the **[Protocol Documentation](docs/protocol.md)**. Understanding the overall protocol flow, credential layout, and the structure of Untraceable-ZK-VC circuits will provide the necessary context for successful development.
 
-- Poseidon hash
-- BabyJubJub EdDSA signatures
-- Rust FFI helper ([`affinidi-zkp-crypto-rs`](https://github.com/affinidi/affinidi-zkp-crypto-rs))
+## Table of Contents
 
-## Repository layout
+- [Core Concepts](#core-concepts)
+- [ZK-VC Workflow Overview](#zk-vc-workflow-overview)
+- [Supported Crypto & Key Management](#supported-crypto--key-management)
+- [Commitment & Data Integrity](#commitment--data-integrity)
+- [Signed VC Document Format](#signed-vc-document-format)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing & Native Symbols](#testing--native-symbols)
+- [Support & Feedback](#support--feedback)
+- [Contributing](#contributing)
 
-- `.` (root): Dart package (`vc_zkp`) with hooks, prebuild metadata, and pub.dev flow.
-- Rust native crypto package: [`affinidi/affinidi-zkp-crypto-rs`](https://github.com/affinidi/affinidi-zkp-crypto-rs).
+## Core Concepts
 
-## What this library provides
+The ZK-VC model enhances traditional SSI by leveraging advanced cryptography for maximum privacy.
 
-- **Issuer flow**: create and sign VC documents
-- **Holder flow**:
-  - prepare signed documents for Circom circuit inputs
-  - sign an already prepared digest (without re-hashing)
-- **Verifier flow**:
-  - document verification helper for tests/local checks
-  - internal EdDSA signature verification via Rust bridge
+- **Verifiable Credential (VC):** A cryptographically signed digital claim. Unlike standard VCs, the goal of the ZK-VC process is not to reveal the data, but to prove knowledge of the data's existence.
+- **Zero-Knowledge Proof (ZKP):** A cryptographic method allowing a Prover (the holder) to prove possession of a secret or knowledge (e.g., "I am over 18") to a Verifier without revealing the underlying secret (the actual birthdate).
+- **Commitment:** A process of cryptographically binding structural elements (field name, type, value) into a single hash. This is crucial for ensuring the inputs are canonical and tamper-proof throughout the ZKP process.
+- **Poseidon Hash:** A permutation-based hash function optimized for algebraic circuit mathematics. It is used as the primary hashing mechanism for generating deterministic commitments within the ZK context.
 
-## Important verifier note
+## ZK-VC Workflow Overview
 
-For untraceable VC production flows, verifier usually does **not** receive the
-full signed document. It receives only a ZKP presentation and verifies that ZK
-proof.
+The lifecycle of a ZK-VC involves three distinct, highly controlled stages:
 
-`VcVerifier.verifyDocument(...)` in this package is intentionally provided for:
+1. **Issuer Flow (Creation):** The Issuer creates the VC by generating structural commitments, calculating the final unique digest, and signing this digest using **EdDSA**.
+2. **Holder Flow (Preparation):** The Holder extracts the required commitment components and prepares them into a flat witness map (`HolderCircuitInputs`) suitable for consumption by the ZK prover circuit.
+3. **Verifier Flow (Validation):** In a production environment, the verifier receives *only* the ZKP presentation and the resulting proof, **not** the full document. The tools provided in this library (`VcVerifier`) are intended strictly for local debugging, comprehensive testing, and integration checks.
 
-- tests
-- local debugging
-- integration checks
+## Supported Crypto & Key Management
 
-## Public API
+The package utilizes robust, high-performance cryptographic primitives.
 
-Import:
+### Cryptographic Standards
+- **Signature Scheme:** **EdDSA** is used for digital signatures, specifically employing the **BabyJubJub** key type.
+- **Crypto Engine:** Core cryptographic operations (including complex EdDSA verification and advanced hashing) are encapsulated in a **Rust Foreign Function Interface (FFI)** bridge (`affinidi-zkp-crypto-rs`). This ensures optimal performance and memory safety, integrating high performance into the Dart/Flutter environment.
 
-```dart
-import 'package:vc_zkp/vc_zkp.dart';
-```
+## Commitment & Data Integrity
 
-Main exported types:
+Commitments are the backbone of data integrity, ensuring that the data inputs for the ZK circuit are fixed and verifiable.
 
-- `VcIssuer`
-- `VcHolder`
-- `VcVerifier`
-- `Disclosure`
-- `SignedVcDocument`
-- `VcSignature`
-- `HolderCircuitInputs`
-- `tryParseIssuerBabyJubCommaSeparated`, `IssuerBabyJubCoords` (optional parsing
-  of `header['issuer']` when it is `Ax,Ay`)
+### Commitment Generation
+The commitment process is highly deterministic:
+`commitment = Poseidon([index, encodeString(fieldName), typeTag, encodeValueByType(value)])`
 
-## Signed VC document format
+This structure ensures that the commitment binds the field's position (`index`), its name (`fieldName`), its data type (`typeTag`), and its value.
 
-The signed document JSON shape is:
+### Data Encoding Types
+For commitment determinism, values are strongly typed, and a type tag is included in every commitment calculation:
+
+| Data Type | Type Tag | Description |
+| :--- | :--- | :--- |
+| `null` | `0` | Null value tag. |
+| `bool` | `1` | Boolean value tag. |
+| `int`/`BigInt` | `2` | Integer value tag. |
+| `String` | `3` | Encoded as raw string bytes. |
+| `Map` | `4` | Canonical JSON encoding of the map. |
+| `List` | `5` | Canonical JSON encoding of the list. |
+
+### Digest Calculation
+The final digest signed by the issuer is calculated by taking a Poseidon hash of the ordered concatenation of all header commitments and payload commitments.
+
+## Signed VC Document Format
+
+The resulting signed document is a structured JSON object that contains all metadata required for verification.
 
 ```json
 {
@@ -85,8 +91,8 @@ The signed document JSON shape is:
     { "field": "age", "value": 28 },
     { "field": "nationality", "value": "USA" }
   ],
-  "header_commitments": ["<poseidon(index,name,type,value)_0>"],
-  "payload_commitments": ["<poseidon(index,name,type,value)_0>"],
+  "header_commitments": ["<poseidon(...)>"],
+  "payload_commitments": ["<poseidon(...)>"],
   "signature": {
     "R8": ["0x...", "0x..."],
     "S": "0x..."
@@ -94,83 +100,43 @@ The signed document JSON shape is:
 }
 ```
 
-## Core logic
+## Requirements
 
-### 1) Commitments
+- Dart SDK version ^3.0.0
 
-- Header commitments are built in **alphabetical key order** of `header`
-  (`issuer` is one commitment input; `holderAx` / `holderAy` stay split for
-  circuit-friendly coordinates).
-- Payload commitments are sorted deterministically by disclosure field name.
-- Each commitment is indexed and typed:
-  - `commitment = Poseidon([index, encodeString(fieldName), typeTag, encodeValueByType(value)])`
+## Installation
 
-### 2) Digest to sign
+Add the package to your `pubspec.yaml` file:
 
-- `finalArray = [...headerCommitments, ...payloadCommitments]`
-- `digest = poseidon(finalArray)`
-
-### 3) Signature
-
-- Signature is generated by Rust helper with pre-hashed mode (`msgHash`)
-- EdDSA over BabyJubJub
-
-## String to felt conversion
-
-For field names and string values:
-
-- If UTF-8 byte length `<= 31`:
-  - direct bytes -> hex -> bigint felt
-- If UTF-8 byte length `> 31`:
-  - bytes -> bits -> Poseidon(bits) using Rust helper
-
-Value encoding is strongly typed:
-
-- `null` -> type tag `0`
-- `bool` -> type tag `1`
-- `int`/`BigInt` -> type tag `2`
-- `String` (always as string, never numeric-coerced) -> type tag `3`
-- `Map` -> type tag `4` with canonical JSON encoding
-- `List` -> type tag `5` with canonical JSON encoding
-
-Why this extra structure exists:
-
-- It binds field position (`index`), field identity (`name`), and value type
-  into a single commitment preimage.
-- This prevents ambiguous claim interpretations across different runtimes and
-  keeps proving/verifying behavior deterministic.
-
-This avoids SHA-256 in the string-to-field path and stays circuit-oriented.
-
-## Example: Untraceable ZK VC Circom witness inputs
-
-Reference Circom templates (7 header + 5 payload digest) live under
-**[example/circuits/](example/circuits/)**.
-
-To print a fresh random demo (issuer/holder keys, blinder, challenge nonce) and
-the corresponding flat witness map for those circuits (stdout only, no files):
-
-```bash
-dart run example/flow_example.dart
+```yaml
+dependencies:
+  vc_zkp: ^<version_number>
 ```
 
-See the top-of-file comments in
-[`example/flow_example.dart`](example/flow_example.dart)
-for pointers to witness generation and proving tooling (e.g. `circom-witnesscalc`,
-`flutter-rapidsnark`).
+Then run the command below to install the package:
 
-## Quick usage
+```bash
+dart pub get
+```
 
-### Issuer: create signed document
+## Usage
+
+### 1. Issuer: Create Signed Document
+
+This function handles the commitment generation, digest calculation, and final EdDSA signing.
 
 ```dart
+import 'package:vc_zkp/vc_zkp.dart';
+
+// 1. Initialize the Issuer
 final issuer = VcIssuer();
 
+// 2. Define Header and Disclosures
 final header = <String, Object?>{
   'version': '1',
   'issued_at': 1712345678,
   'expires_at': 1743881678,
-  // Single issuer string: BabyJub `Ax,Ay` (decimal or 0x), or a DID / other id.
+  // Issuer ID can be a DID or a raw public key pair (Ax, Ay).
   'issuer': '12345678901234567890...,98765432109876543210...',
   'holderAx': '11111111111111111111...',
   'holderAy': '22222222222222222222...',
@@ -181,9 +147,8 @@ final disclosures = <Disclosure>[
   const Disclosure(field: 'age', value: 28),
   const Disclosure(field: 'nationality', value: 'USA'),
 ];
-// Payload fields are sorted deterministically by field name before indexing.
-// Duplicate payload field names are rejected.
 
+// 3. Generate the signed document
 final doc = await issuer.createSignedDocument(
   header: header,
   disclosures: disclosures,
@@ -191,137 +156,83 @@ final doc = await issuer.createSignedDocument(
 );
 ```
 
-### Holder: prepare inputs for Circom
+### 2. Holder: Prepare Inputs for Circuit
+
+The holder extracts the necessary commitment components to generate the flat witness map required by the ZKP prover.
 
 ```dart
 final holder = VcHolder();
 final inputs = await holder.prepareForCircuit(doc);
 
 final witnessInputs = inputs.toJson();
-// Contains:
+// This resulting map contains:
 // header_commitments, payload_commitments, final_array, signature,
-// holderAx, holderAy; issuerAx/issuerAy only if header issuer was Ax,Ay
-// optional schema
+// holderAx, holderAy, etc.
 ```
 
-### Holder: sign precomputed digest
+### 3. Holder: Sign Precomputed Digest
+
+The holder can sign the digest using their own private key if required by the workflow.
 
 ```dart
 final holder = VcHolder();
 
 final signature = await holder.signPreparedDigest(
-  digest: 'POSEIDON_DIGEST_AS_DECIMAL_STRING',
+  digest: 'POSEIDON_DIGEST_AS_DECIMAL_STRING', // Must match the digest used by the Issuer
   privateKeyHex: 'YOUR_64_HEX_PRIVATE_KEY',
 );
 ```
 
-### Verifier: verify document
+### 4. Verifier: Verify Document (Testing/Local Use Only)
+
+Use the verifier for local validation and testing purposes.
 
 ```dart
 final verifier = VcVerifier();
 
-// If header['issuer'] is comma-separated Ax,Ay, verifier can derive key from it.
+// Basic verification of the full document signature and commitments.
 final result = await verifier.verifyDocument(doc);
 
-// Optional: provide app-resolved issuer public key explicitly (e.g. DID flow).
+// If advanced DID resolution is available, use the optional overloads:
 final resultWithKey = await verifier.verifyDocument(
   doc,
   issuerPublicKeyAx: resolvedAxDecimal,
   issuerPublicKeyAy: resolvedAyDecimal,
 );
-
-// Optional: if your app already reconciled issuer identifier -> key mapping
-// (for example DID resolution), skip header issuer key matching:
-final resultWithDid = await verifier.verifyDocument(
-  doc,
-  issuerPublicKeyAx: resolvedAxDecimal,
-  issuerPublicKeyAy: resolvedAyDecimal,
-  isIssuerPubKeyMatchAlreadyVerified: true,
-);
 ```
 
-For EdDSA, `VcVerifier` accepts optional `issuerPublicKeyAx` /
-`issuerPublicKeyAy`. If they are provided, verifier checks them against
-parseable `header['issuer']` value (`Ax,Ay`) by default.
+## Testing & Native Symbols
 
-## Notes about missing commitments
+This project includes two test suites:
 
-When holder prepares circuit inputs, commitments are always rebuilt from
-`header` + `disclosures`.
-
-## Native runtime note
-
-Native libraries are resolved via Dart hooks from prebuilt release assets
-described in `prebuilds/manifest.json`. App developers using this package do not
-need to build Rust manually.
-
-## Running tests
-
-This project has two test suites:
-
-- Unit tests (mocked crypto bridge)
-- Integration tests (real Rust FFI bridge)
+- **Unit tests:** Run with mocked crypto bridges.
+- **Integration tests:** Utilize the real Rust FFI bridge for deep cryptographic validation.
 
 Run unit tests:
-
 ```bash
 dart test
 ```
 
-Run Rust bridge integration tests (the `integration` tag is skipped by default
-in `dart_test.yaml`):
-
-```bash
-dart test test/rust_bridge_integration_test.dart --run-skipped
-```
-
 Run all tests (unit + integration):
-
 ```bash
 dart test --run-skipped
 ```
 
-If integration tests fail with library loading errors:
+**Debugging Native Crashes:** If your application crashes within the native Rust code, download the necessary debug symbols for your specific build triple:
 
 ```bash
-dart pub get
-dart test --run-skipped
-```
-
-## Download native debug symbols
-
-When your app crashes inside `rust_eddsa_helper`, download the symbol archives
-that match the native prebuild release used by this package, then upload them
-to your crash backend (Sentry, Crashlytics, Play Console, or local symbolication
-tools).
-
-Use:
-
-```bash
-./tool/download_prebuild_symbols.sh
-```
-
-Useful options:
-
-```bash
-# specific triples only
-./tool/download_prebuild_symbols.sh \
-  --triple aarch64-apple-ios \
-  --triple aarch64-linux-android
-
-# custom output directory
 ./tool/download_prebuild_symbols.sh --output-dir ./.native-symbols
 ```
 
-Notes:
+## Support & Feedback
 
-- Apple symbols are downloaded as `*.dSYM.zip`.
-- Android symbols are downloaded as `*.so.debug.zip`.
-- The script reads `prebuilds/manifest.json` and uses `symbols.url` when present.
-  If absent, it derives a symbols URL from the binary URL.
-- If the release does not contain symbols yet, you will see `404` warnings.
+If you encounter any technical issues or have suggestions regarding the protocol or implementation, please don't hesitate to contact us using [this link](https://share.hsforms.com/1i-4HKZRXSsmENzXtPdIG4g8oa2v).
 
-## Implementation notes:
+### Reporting Technical Issues
+For issues with the codebase, please open a detailed issue on GitHub. Include a title, clear description, and, ideally, an executable code sample demonstrating the failure.
 
-- Document verification uses the Rust FFI EdDSA verifier (its for internal tests, debug mostly); production flows
-  still typically verify a ZKP presentation rather than this full document.
+## Contributing
+
+Want to contribute?
+
+Please review our [CONTRIBUTING](CONTRIBUTING.md) guidelines. We welcome contributions to improving the ZK-VC standards and tooling.
