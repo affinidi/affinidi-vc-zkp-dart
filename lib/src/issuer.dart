@@ -6,7 +6,7 @@ import 'rust_eddsa_helper_ffi.dart';
 class VcIssuer {
   /// Creates issuer helper with optional injected Rust bridge.
   VcIssuer({RustEddsaHelperFfi? crypto})
-      : _crypto = crypto ?? RustEddsaHelperFfi();
+    : _crypto = crypto ?? RustEddsaHelperFfi();
 
   final RustEddsaHelperFfi _crypto;
 
@@ -27,8 +27,10 @@ class VcIssuer {
   }) async {
     _validateHeader(header);
     final headerCommitments = await buildHeaderCommitments(header, _crypto);
-    final payloadCommitments =
-        await buildPayloadCommitments(disclosures, _crypto);
+    final payloadCommitments = await buildPayloadCommitments(
+      disclosures,
+      _crypto,
+    );
     final digest = await buildDocumentDigest(
       headerCommitments: headerCommitments,
       payloadCommitments: payloadCommitments,

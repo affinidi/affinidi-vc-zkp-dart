@@ -23,10 +23,10 @@ class VerificationResult {
 
   /// Converts result to JSON map.
   Map<String, Object?> toJson() => {
-        'valid': valid,
-        'error': error,
-        'signature_valid': signatureValid,
-      };
+    'valid': valid,
+    'error': error,
+    'signature_valid': signatureValid,
+  };
 }
 
 /// Document verifier intended for tests and local debugging.
@@ -91,8 +91,7 @@ class VcVerifier {
         document.header,
         issuerPublicKeyAx: issuerPublicKeyAx,
         issuerPublicKeyAy: issuerPublicKeyAy,
-        isIssuerPubKeyMatchAlreadyVerified:
-            isIssuerPubKeyMatchAlreadyVerified,
+        isIssuerPubKeyMatchAlreadyVerified: isIssuerPubKeyMatchAlreadyVerified,
       );
       final digest = await buildDocumentDigest(
         headerCommitments: computedHeaderCommitments,
@@ -115,10 +114,7 @@ class VcVerifier {
         );
       }
 
-      return const VerificationResult(
-        valid: true,
-        signatureValid: true,
-      );
+      return const VerificationResult(valid: true, signatureValid: true);
     } on Object catch (error) {
       return VerificationResult(
         valid: false,
@@ -170,7 +166,8 @@ class VcVerifier {
             'this check.',
           );
         }
-        if (parsed.ax != normalizedOverrideAx || parsed.ay != normalizedOverrideAy) {
+        if (parsed.ax != normalizedOverrideAx ||
+            parsed.ay != normalizedOverrideAy) {
           throw const FormatException(
             'Issuer signing key mismatch: derived key from header issuer does '
             'not match issuerPublicKeyAx/issuerPublicKeyAy.',
@@ -222,8 +219,7 @@ class VcVerifier {
       return 'Credential header is missing a valid expires_at timestamp.';
     }
 
-    final nowSeconds =
-        DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final nowSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     if (nowSeconds < issuedAt) {
       return 'Credential is not yet valid (issued_at is in the future).';
@@ -236,10 +232,7 @@ class VcVerifier {
 }
 
 class _IssuerPublicKey {
-  const _IssuerPublicKey({
-    required this.ax,
-    required this.ay,
-  });
+  const _IssuerPublicKey({required this.ax, required this.ay});
 
   final String ax;
   final String ay;

@@ -3,15 +3,15 @@ import 'dart:ffi' as ffi;
 
 import 'package:ffi/ffi.dart';
 
-typedef _PoseidonHashNative = ffi.Int32 Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-typedef _PoseidonHashBitsNative = ffi.Int32 Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
+typedef _PoseidonHashNative =
+    ffi.Int32 Function(ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
+typedef _PoseidonHashBitsNative =
+    ffi.Int32 Function(ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
 typedef _PoseidonFreeStringNative = ffi.Void Function(ffi.Pointer<Utf8>);
-typedef _EddsaSignNative = ffi.Int32 Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
-typedef _EddsaVerifyNative = ffi.Int32 Function(
-    ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
+typedef _EddsaSignNative =
+    ffi.Int32 Function(ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
+typedef _EddsaVerifyNative =
+    ffi.Int32 Function(ffi.Pointer<Utf8>, ffi.Pointer<ffi.Pointer<Utf8>>);
 typedef _EddsaFreeStringNative = ffi.Void Function(ffi.Pointer<Utf8>);
 
 @ffi.Native<_PoseidonHashNative>(symbol: 'poseidon_hash')
@@ -74,10 +74,7 @@ class EddsaSignatureResult {
 /// Result of public key derivation from private key.
 class EddsaPublicKeyResult {
   /// Creates a public key result.
-  const EddsaPublicKeyResult({
-    required this.ax,
-    required this.ay,
-  });
+  const EddsaPublicKeyResult({required this.ax, required this.ay});
 
   /// Public key x coordinate.
   final String ax;

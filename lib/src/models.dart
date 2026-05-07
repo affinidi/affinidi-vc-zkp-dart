@@ -3,10 +3,7 @@ import 'dart:convert';
 /// A field disclosure entry for the VC payload.
 class Disclosure {
   /// Creates a disclosure.
-  const Disclosure({
-    required this.field,
-    required this.value,
-  });
+  const Disclosure({required this.field, required this.value});
 
   /// Claim field name.
   final String field;
@@ -15,10 +12,7 @@ class Disclosure {
   final Object? value;
 
   /// Converts this disclosure to JSON.
-  Map<String, Object?> toJson() => {
-        'field': field,
-        'value': value,
-      };
+  Map<String, Object?> toJson() => {'field': field, 'value': value};
 
   /// Builds a disclosure from JSON.
   factory Disclosure.fromJson(Map<String, dynamic> json) {
@@ -26,20 +20,14 @@ class Disclosure {
     if (field is! String || field.isEmpty) {
       throw ArgumentError('Disclosure field must be a non-empty string.');
     }
-    return Disclosure(
-      field: field,
-      value: json['value'],
-    );
+    return Disclosure(field: field, value: json['value']);
   }
 }
 
 /// Signature for an untraceable ZK VC document.
 class VcSignature {
   /// Creates a signature object.
-  const VcSignature({
-    required this.r8,
-    required this.s,
-  });
+  const VcSignature({required this.r8, required this.s});
 
   /// EdDSA `R8` point `[R8x, R8y]` as decimal field elements.
   final List<String> r8;
@@ -48,10 +36,7 @@ class VcSignature {
   final String s;
 
   /// Converts this signature to JSON.
-  Map<String, Object?> toJson() => {
-        'R8': r8,
-        'S': s,
-      };
+  Map<String, Object?> toJson() => {'R8': r8, 'S': s};
 
   /// Builds signature from JSON.
   factory VcSignature.fromJson(Map<String, dynamic> json) {
@@ -97,12 +82,12 @@ class SignedVcDocument {
 
   /// Converts this document to JSON shape requested by circuits.
   Map<String, Object?> toJson() => {
-        'header': header,
-        'disclosures': disclosures.map((item) => item.toJson()).toList(),
-        'header_commitments': headerCommitments,
-        'payload_commitments': payloadCommitments,
-        'signature': signature.toJson(),
-      };
+    'header': header,
+    'disclosures': disclosures.map((item) => item.toJson()).toList(),
+    'header_commitments': headerCommitments,
+    'payload_commitments': payloadCommitments,
+    'signature': signature.toJson(),
+  };
 
   /// Builds a signed VC document from JSON.
   factory SignedVcDocument.fromJson(Map<String, dynamic> json) {

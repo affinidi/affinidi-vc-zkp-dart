@@ -4,10 +4,7 @@
 /// keys outside this library and pass them to `verifyDocument`.
 class IssuerBabyJubCoords {
   /// Creates parsed issuer coordinates.
-  const IssuerBabyJubCoords({
-    required this.ax,
-    required this.ay,
-  });
+  const IssuerBabyJubCoords({required this.ax, required this.ay});
 
   /// Field element x as decimal string.
   final String ax;

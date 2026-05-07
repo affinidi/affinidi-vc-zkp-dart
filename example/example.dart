@@ -1,5 +1,5 @@
 // Run from the repository root:
-//   dart run example/flow_example.dart
+//   dart run example/example.dart
 //
 // Reference Circom sources for field layout and public signals live under:
 //   example/circuits/

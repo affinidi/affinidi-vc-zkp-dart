@@ -25,9 +25,9 @@ class HolderCircuitInputs {
 
   /// Final commitment array used for digest hash.
   List<String> get finalArray => <String>[
-        ...headerCommitments,
-        ...payloadCommitments,
-      ];
+    ...headerCommitments,
+    ...payloadCommitments,
+  ];
 
   /// Signature.
   final VcSignature signature;
@@ -50,23 +50,23 @@ class HolderCircuitInputs {
 
   /// Converts to JSON map suitable for Circom witness inputs.
   Map<String, Object?> toJson() => {
-        'header_commitments': headerCommitments,
-        'payload_commitments': payloadCommitments,
-        'final_array': finalArray,
-        'signature': signature.toJson(),
-        if (issuerAx.isNotEmpty) 'issuerAx': issuerAx,
-        if (issuerAy.isNotEmpty) 'issuerAy': issuerAy,
-        'holderAx': holderAx,
-        'holderAy': holderAy,
-        if (schemaHash != null) 'schema': schemaHash,
-      };
+    'header_commitments': headerCommitments,
+    'payload_commitments': payloadCommitments,
+    'final_array': finalArray,
+    'signature': signature.toJson(),
+    if (issuerAx.isNotEmpty) 'issuerAx': issuerAx,
+    if (issuerAy.isNotEmpty) 'issuerAy': issuerAy,
+    'holderAx': holderAx,
+    'holderAy': holderAy,
+    if (schemaHash != null) 'schema': schemaHash,
+  };
 }
 
 /// Holder helper for preparing circuit inputs and additional signatures.
 class VcHolder {
   /// Creates holder helper with optional injected Rust bridge.
   VcHolder({RustEddsaHelperFfi? crypto})
-      : _crypto = crypto ?? RustEddsaHelperFfi();
+    : _crypto = crypto ?? RustEddsaHelperFfi();
 
   final RustEddsaHelperFfi _crypto;
 
@@ -111,9 +111,6 @@ class VcHolder {
       msgHash: digest,
       privateKeyHex: privateKeyHex,
     );
-    return VcSignature(
-      r8: [signed.r8x, signed.r8y],
-      s: signed.s,
-    );
+    return VcSignature(r8: [signed.r8x, signed.r8y], s: signed.s);
   }
 }

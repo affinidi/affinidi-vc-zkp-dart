@@ -3,10 +3,7 @@ import 'rust_eddsa_helper_ffi.dart';
 /// BabyJubJub public key coordinates as decimal field strings.
 class BabyJubPublicKey {
   /// Creates a BabyJubJub public key.
-  const BabyJubPublicKey({
-    required this.ax,
-    required this.ay,
-  });
+  const BabyJubPublicKey({required this.ax, required this.ay});
 
   /// X coordinate.
   final String ax;
@@ -22,7 +19,7 @@ class BabyJubPublicKey {
 class VcKeyDerivation {
   /// Creates key derivation helper with optional injected Rust bridge.
   VcKeyDerivation({RustEddsaHelperFfi? crypto})
-      : _crypto = crypto ?? RustEddsaHelperFfi();
+    : _crypto = crypto ?? RustEddsaHelperFfi();
 
   final RustEddsaHelperFfi _crypto;
 
@@ -30,9 +27,7 @@ class VcKeyDerivation {
   Future<BabyJubPublicKey> derivePublicKey({
     required String privateKeyHex,
   }) async {
-    final derived = await _crypto.derivePublicKey(
-      privateKeyHex: privateKeyHex,
-    );
+    final derived = await _crypto.derivePublicKey(privateKeyHex: privateKeyHex);
     return BabyJubPublicKey(ax: derived.ax, ay: derived.ay);
   }
 }
