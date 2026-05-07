@@ -28,8 +28,8 @@ command:
       onlyBreaking: false
 
 melos:
-  packages:
-    - .
+  name: vc_zkp
+  useRootAsPackage: true
   scripts:
     test:
       name: test
