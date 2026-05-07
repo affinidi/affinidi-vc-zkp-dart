@@ -14,7 +14,9 @@ dependencies:
   hooks: ^1.0.2
   path: ^1.9.0
 dev_dependencies:
+  coverage: ^1.11.1
   dart_flutter_team_lints: ^3.5.2
+  melos: ^7.0.0
   test: ^1.31.0
 
 topics:
