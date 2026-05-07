@@ -6,7 +6,7 @@ The Affinidi VCs for ZKPs package provides a specialized Dart SDK for implementi
 > This package is a cryptographic tool and does not process personal data outside of the structured data defined by the user. When integrated into a broader system that handles personally identifiable information (PII), users are solely responsible for ensuring that the entire use case complies with all applicable privacy laws and data protection obligations (e.g., GDPR).
 
 **Protocol Guide:**
-While the library provides implementation tools, we encourage you to start by exploring the **[Protocol Documentation](docs/protocol.md)**. Understanding the overall protocol flow, credential layout, and the structure of Untraceable-ZK-VC circuits will provide the necessary context for successful development.
+While the library provides implementation tools, we encourage you to start by exploring the **[Protocol Documentation](doc/protocol.md)**. Understanding the overall protocol flow, credential layout, and the structure of Untraceable-ZK-VC circuits will provide the necessary context for successful development.
 
 ## Table of Contents
 

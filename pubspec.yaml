@@ -3,6 +3,7 @@ description: >-
   VCs for ZKPs — Dart. Native Poseidon/EdDSA via prebuilt Rust binaries
   (macOS, iOS, Android). App developers do not need Rust installed.
 version: 1.0.0
+repository: https://github.com/affinidi/affinidi-vc-zkp-dart
 
 environment:
   sdk: ^3.10.0
@@ -10,7 +11,7 @@ environment:
 dependencies:
   code_assets: ^1.0.0
   crypto: ^3.0.6
-  ffi: 2.0.1
+  ffi: ^2.0.1
   hooks: ^1.0.2
   path: ^1.9.0
 dev_dependencies:

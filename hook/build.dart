@@ -48,7 +48,7 @@ void main(List<String> args) async {
             'No prebuild entry for Rust triple "$triple" in prebuilds/manifest.json. '
             'Known triples: $keys. '
             'Maintainers: add a slice (vendored file under prebuilds/ and/or a '
-            'download URL); see docs/native_build_and_hooks.md.',
+            'download URL); see doc/native_build_and_hooks.md.',
       );
     }
 
