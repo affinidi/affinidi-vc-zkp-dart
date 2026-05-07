@@ -10,4 +10,4 @@ jobs:
     secrets: inherit
     with:
       publish: false
-      flutter-version: 3.35.5
+      flutter-version: 3.38.1
