@@ -15,6 +15,31 @@ Packages with breaking changes:
 
 Packages with other changes:
 
+ - [`vc_zkp` - `v1.2.3`](#vc_zkp---v123)
+
+---
+
+#### `vc_zkp` - `v1.2.3`
+
+ - **FIX**: add EddsaSignatureResult, RustEddsaHelperFfi exports.
+
+## 1.2.3
+
+ - **FIX**: add EddsaSignatureResult, RustEddsaHelperFfi exports.
+
+
+## 2026-05-07
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
  - [`vc_zkp` - `v1.2.2`](#vc_zkp---v122)
 
 ---
