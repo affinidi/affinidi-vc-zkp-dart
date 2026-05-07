@@ -22,7 +22,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:vc_zkp/src/rust_eddsa_helper_ffi.dart';
 import 'package:vc_zkp/vc_zkp.dart';
 
 /// BN254 field prime (same as `lib/src/commitments.dart`).
