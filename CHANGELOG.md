@@ -15,6 +15,31 @@ Packages with breaking changes:
 
 Packages with other changes:
 
+ - [`vc_zkp` - `v1.2.2`](#vc_zkp---v122)
+
+---
+
+#### `vc_zkp` - `v1.2.2`
+
+ - **FIX**: export RustEddsaHelperFfi.
+
+## 1.2.2
+
+ - **FIX**: export RustEddsaHelperFfi.
+
+
+## 2026-05-07
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
  - [`vc_zkp` - `v1.2.1`](#vc_zkp---v121)
 
 ---
