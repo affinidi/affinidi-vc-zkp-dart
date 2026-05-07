@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:test/test.dart';
 import 'package:vc_zkp/src/commitments.dart';
-import 'package:vc_zkp/src/rust_eddsa_helper_ffi.dart';
 import 'package:vc_zkp/vc_zkp.dart';
 
 class _FakeRustEddsaHelper implements RustEddsaHelperFfi {
