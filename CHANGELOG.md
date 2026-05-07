@@ -15,6 +15,31 @@ Packages with breaking changes:
 
 Packages with other changes:
 
+ - [`vc_zkp` - `v1.2.4`](#vc_zkp---v124)
+
+---
+
+#### `vc_zkp` - `v1.2.4`
+
+ - **FIX**: update manifest.
+
+## 1.2.4
+
+ - **FIX**: update manifest.
+
+
+## 2026-05-07
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
  - [`vc_zkp` - `v1.2.3`](#vc_zkp---v123)
 
 ---
