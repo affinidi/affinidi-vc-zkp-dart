@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 2026-05-11
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`vc_zkp` - `v1.2.5`](#vc_zkp---v125)
+
+---
+
+#### `vc_zkp` - `v1.2.5`
+
+ - **FIX**: add hooks for the Windows and Linux platforms.
+
+## 1.2.5
+
+ - **FIX**: add hooks for the Windows and Linux platforms.
+
+
 ## 2026-05-07
 
 ### Changes

@@ -2,7 +2,7 @@ name: vc_zkp
 description: >-
   VCs for ZKPs — Dart. Native Poseidon/EdDSA via prebuilt Rust binaries
   (macOS, iOS, Android, Linux, Windows). App developers do not need Rust installed.
-version: 1.2.4
+version: 1.2.5
 repository: https://github.com/affinidi/affinidi-vc-zkp-dart
 
 environment:
