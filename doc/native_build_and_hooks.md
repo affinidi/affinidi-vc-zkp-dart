@@ -66,9 +66,9 @@ printf '%s\n' /path/to/bundle > prebuilds/.vc_zkp_prebuilds_root
 To populate **`prebuilds/<triple>/`**, use
 **`tool/build_all_prebuilds.sh`** from
 [`affinidi/affinidi-zkp-crypto-rs`](https://github.com/affinidi/affinidi-zkp-crypto-rs)
-(Apple: macOS + Rust; Android: **Docker** + NDK in the image).
+(Apple: macOS + Rust; Android, Linux, Windows: **Docker** + cross-compilation toolchain in the image).
 
-Library names follow OS conventions (`librust_eddsa_helper.dylib` on Apple platforms, `librust_eddsa_helper.so` on Android).
+Library names follow OS conventions (`librust_eddsa_helper.dylib` on Apple platforms, `librust_eddsa_helper.so` on Android and Linux, `rust_eddsa_helper.dll` on Windows).
 
 References:
 

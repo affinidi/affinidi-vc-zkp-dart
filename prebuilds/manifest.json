@@ -34,5 +34,17 @@
   "x86_64-linux-android": {
     "sha256": "8fef926e3c7ae626d5b1887f7660ceb731a553f75ced38806168f7d2bfc01b7b",
     "url": "https://github.com/affinidi/affinidi-zkp-crypto-rs/releases/download/prebuilds-18f54bcfcf4609ed3f8e8f9f0c603ff8df4f9193a08000e00d4bac018b790f5b/rust_eddsa_helper-x86_64-linux-android.so"
+  },
+  "aarch64-unknown-linux-gnu": {
+    "sha256": "af401deee670eba92d388c73c3c3b56fc37ff467dfd9fc2b69dc8f677b071578",
+    "url": "https://github.com/affinidi/affinidi-zkp-crypto-rs/releases/download/prebuilds-325fa6e85d401533765474960336e2da70e98bc72e5c60e7fb90d43743938123/rust_eddsa_helper-aarch64-unknown-linux-gnu.so"
+  },
+  "x86_64-pc-windows-gnu": {
+    "sha256": "8119653a335d12193612c761b77e221afdbc0cc3ca20f94fb94478b1422883b5",
+    "url": "https://github.com/affinidi/affinidi-zkp-crypto-rs/releases/download/prebuilds-325fa6e85d401533765474960336e2da70e98bc72e5c60e7fb90d43743938123/rust_eddsa_helper-x86_64-pc-windows-gnu.dll"
+  },
+  "x86_64-unknown-linux-gnu": {
+    "sha256": "1625fe17a670ff0e2c7237744db6997c29e074533c3d9886ab75fba07ceb9205",
+    "url": "https://github.com/affinidi/affinidi-zkp-crypto-rs/releases/download/prebuilds-325fa6e85d401533765474960336e2da70e98bc72e5c60e7fb90d43743938123/rust_eddsa_helper-x86_64-unknown-linux-gnu.so"
   }
 }

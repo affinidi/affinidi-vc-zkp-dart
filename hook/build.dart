@@ -33,7 +33,8 @@ void main(List<String> args) async {
         message:
             'Unsupported native target: ${code.targetOS} '
             '${code.targetArchitecture}. '
-            'Supported: macOS (arm64, x64), iOS (device + simulator), Android.',
+            'Supported: macOS (arm64, x64), iOS (device + simulator), '
+            'Android, Linux (x64, arm64), Windows (x64).',
       );
     }
 
@@ -299,6 +300,17 @@ String? _rustTriple(CodeConfig code) {
         Architecture.arm => 'armv7-linux-androideabi',
         Architecture.x64 => 'x86_64-linux-android',
         Architecture.ia32 => 'i686-linux-android',
+        _ => null,
+      };
+    case OS.linux:
+      return switch (arch) {
+        Architecture.x64 => 'x86_64-unknown-linux-gnu',
+        Architecture.arm64 => 'aarch64-unknown-linux-gnu',
+        _ => null,
+      };
+    case OS.windows:
+      return switch (arch) {
+        Architecture.x64 => 'x86_64-pc-windows-gnu',
         _ => null,
       };
     default:

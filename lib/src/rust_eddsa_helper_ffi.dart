@@ -86,7 +86,7 @@ class EddsaPublicKeyResult {
 /// FFI wrapper around Rust helper (Poseidon + EdDSA).
 ///
 /// Native code is built and bundled via `hook/build.dart` (Dart hooks). Supported
-/// targets: macOS, iOS, and Android.
+/// targets: macOS, iOS, Android, Linux, and Windows.
 class RustEddsaHelperFfi {
   /// Creates helper; symbols resolve against the bundled `rust_eddsa_helper`
   /// dynamic library from the build hook.
